@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit 3 Space Rocket Race</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto:wght@400;700&display=swap');
+
+        body {
+            background-color: #0f172a;
+            color: white;
+            font-family: 'Roboto', sans-serif;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(56, 189, 248, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 80% 70%, rgba(168, 85, 247, 0.1) 0%, transparent 20%);
+        }
+
+        .font-sci-fi { font-family: 'Orbitron', sans-serif; }
+
+        /* Stars Background Animation */
+        .stars {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle var(--duration) infinite ease-in-out;
+            opacity: var(--opacity);
+        }
+        @keyframes twinkle {
+            0%, 100% { transform: scale(0.8); opacity: 0.3; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        /* Question Card */
+        .q-card {
+            background: rgba(30, 41, 59, 0.9);
+            border: 2px solid #38bdf8;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        /* Rocket Track */
+        .track-container {
+            position: relative;
+            margin: 10px 0;
+            padding: 10px 0;
+            border-bottom: 1px dashed rgba(255,255,255,0.1);
+        }
+
+        .planet-goal {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 3rem;
+            color: #ef4444; /* Mars Red */
+            filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.5));
+            z-index: 10;
+        }
+
+        .rocket-wrapper {
+            position: absolute;
+            left: 20px; /* Start position */
+            top: 50%;
+            transform: translateY(-50%);
+            transition: left 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy effect */
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rocket {
+            font-size: 2.5rem;
+            transform: rotate(45deg);
+            filter: drop-shadow(0 0 5px currentColor);
+        }
+
+        .exhaust {
+            position: absolute;
+            left: -15px;
+            top: 50%;
+            transform: translateY(-50%) rotate(180deg);
+            font-size: 1.5rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .rocket-wrapper.moving .exhaust {
+            opacity: 1;
+        }
+
+        /* Controls */
+        .control-btn {
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .control-btn:active { transform: scale(0.95); }
+        .control-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+        .control-btn:hover::after { left: 100%; }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 10px; height: 10px;
+            background-color: #f00;
+            animation: fall linear forwards;
+            z-index: 100;
+        }
+        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); } }
+
+    </style>
+</head>
+<body class="h-screen flex flex-col p-4 select-none">
+
+    <!-- Background Stars -->
+    <div id="stars" class="stars"></div>
+
+    <!-- Header / Status -->
+    <header class="flex justify-between items-center mb-4 px-4">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-shuttle-space text-3xl text-purple-400"></i>
+            <div>
+                <h1 class="text-2xl font-sci-fi font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">SPACE RACE</h1>
+                <p class="text-xs text-slate-400 font-mono">Mission: Unit 3 Review</p>
+            </div>
+        </div>
+        <div class="font-mono text-xl text-sky-300">
+            Q: <span id="q-counter">0</span> / <span id="q-total">0</span>
+        </div>
+    </header>
+
+    <!-- Main Game Area -->
+    <main class="flex-grow flex flex-col gap-4">
+        
+        <!-- Question Display (Big & Central) -->
+        <div class="flex-grow flex items-center justify-center relative">
+            <div class="q-card w-full max-w-4xl p-8 text-center relative z-10 min-h-[200px] flex flex-col justify-center items-center">
+                
+                <div id="category-badge" class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-slate-900 border border-slate-600 px-4 py-1 rounded-full text-xs font-sci-fi text-slate-300 tracking-widest uppercase">
+                    READY
+                </div>
+
+                <div id="question-text" class="text-3xl md:text-5xl font-bold mb-6 leading-tight">
+                    Are you ready, Cadets?
+                </div>
+
+                <div id="answer-text" class="hidden text-4xl md:text-5xl font-bold text-green-400 animate-bounce">
+                    ANSWER
+                </div>
+
+                <div id="start-btn-container">
+                    <button onclick="nextQuestion()" class="mt-4 bg-purple-600 hover:bg-purple-500 text-white font-sci-fi py-3 px-8 rounded-full text-xl shadow-[0_0_20px_rgba(168,85,247,0.5)] animate-pulse">
+                        START MISSION
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Race Tracks -->
+        <div class="bg-slate-900/50 rounded-xl border border-slate-700 p-4 backdrop-blur-sm">
+            
+            <!-- Team A -->
+            <div class="track-container h-16">
+                <div class="rocket-wrapper" id="rocket-0" style="left: 2%;">
+                    <div class="exhaust text-orange-500"><i class="fa-solid fa-fire"></i></div>
+                    <i class="fa-solid fa-rocket rocket text-red-500"></i>
+                    <span class="text-xs font-bold bg-red-900/50 px-2 rounded text-red-200">TEAM A</span>
+                </div>
+                <i class="fa-solid fa-planet-ringed planet-goal"></i>
+            </div>
+
+            <!-- Team B -->
+            <div class="track-container h-16">
+                <div class="rocket-wrapper" id="rocket-1" style="left: 2%;">
+                    <div class="exhaust text-cyan-500"><i class="fa-solid fa-fire"></i></div>
+                    <i class="fa-solid fa-rocket rocket text-blue-500"></i>
+                    <span class="text-xs font-bold bg-blue-900/50 px-2 rounded text-blue-200">TEAM B</span>
+                </div>
+                <i class="fa-solid fa-planet-ringed planet-goal"></i>
+            </div>
+
+            <!-- Team C -->
+            <div class="track-container h-16">
+                <div class="rocket-wrapper" id="rocket-2" style="left: 2%;">
+                    <div class="exhaust text-lime-500"><i class="fa-solid fa-fire"></i></div>
+                    <i class="fa-solid fa-rocket rocket text-green-500"></i>
+                    <span class="text-xs font-bold bg-green-900/50 px-2 rounded text-green-200">TEAM C</span>
+                </div>
+                <i class="fa-solid fa-planet-ringed planet-goal"></i>
+            </div>
+
+            <!-- Team D -->
+            <div class="track-container h-16 border-b-0">
+                <div class="rocket-wrapper" id="rocket-3" style="left: 2%;">
+                    <div class="exhaust text-yellow-500"><i class="fa-solid fa-fire"></i></div>
+                    <i class="fa-solid fa-rocket rocket text-yellow-500"></i>
+                    <span class="text-xs font-bold bg-yellow-900/50 px-2 rounded text-yellow-200">TEAM D</span>
+                </div>
+                <i class="fa-solid fa-planet-ringed planet-goal"></i>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Controls Footer -->
+    <footer class="mt-2 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+        
+        <!-- Game Controls -->
+        <div class="flex gap-2 justify-center md:justify-start">
+            <button onclick="nextQuestion()" class="control-btn bg-slate-700 hover:bg-slate-600 text-white py-3 px-6 rounded-lg font-bold border-b-4 border-slate-900 active:border-b-0 active:translate-y-1">
+                <i class="fa-solid fa-forward"></i> NEXT Q
+            </button>
+            <button onclick="revealAnswer()" class="control-btn bg-sky-600 hover:bg-sky-500 text-white py-3 px-6 rounded-lg font-bold border-b-4 border-sky-800 active:border-b-0 active:translate-y-1">
+                <i class="fa-regular fa-eye"></i> REVEAL
+            </button>
+        </div>
+
+        <!-- Team Boosters -->
+        <div class="flex gap-2 justify-center">
+            <button onclick="boostRocket(0)" class="control-btn w-12 h-12 rounded-full bg-red-600 hover:bg-red-500 border-b-4 border-red-800 active:border-b-0 active:translate-y-1 text-white font-bold text-xl shadow-lg shadow-red-500/30">A</button>
+            <button onclick="boostRocket(1)" class="control-btn w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-500 border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 text-white font-bold text-xl shadow-lg shadow-blue-500/30">B</button>
+            <button onclick="boostRocket(2)" class="control-btn w-12 h-12 rounded-full bg-green-600 hover:bg-green-500 border-b-4 border-green-800 active:border-b-0 active:translate-y-1 text-white font-bold text-xl shadow-lg shadow-green-500/30">C</button>
+            <button onclick="boostRocket(3)" class="control-btn w-12 h-12 rounded-full bg-yellow-500 hover:bg-yellow-400 border-b-4 border-yellow-700 active:border-b-0 active:translate-y-1 text-white font-bold text-xl shadow-lg shadow-yellow-500/30">D</button>
+        </div>
+
+        <!-- Reset / Undo -->
+        <div class="flex gap-2 justify-center md:justify-end">
+            <button onclick="openPicker()" class="control-btn bg-pink-600 hover:bg-pink-500 text-white py-3 px-6 rounded-lg font-bold border-b-4 border-pink-800 active:border-b-0 active:translate-y-1">
+                <i class="fa-solid fa-shuffle"></i> PICKER
+            </button>
+            <button onclick="if(confirm('Reset Race?')) resetRace()" class="text-slate-500 hover:text-red-400 text-sm font-mono">
+                <i class="fa-solid fa-trash"></i> RESET
+            </button>
+        </div>
+
+    </footer>
+
+    <!-- Picker Modal -->
+    <div id="picker-modal" class="fixed inset-0 bg-black/90 z-50 hidden flex-col items-center justify-center backdrop-blur-md">
+        <button onclick="closePicker()" class="absolute top-8 right-8 text-slate-400 hover:text-white text-4xl">&times;</button>
+        <h2 class="text-sky-400 font-sci-fi text-3xl mb-12 tracking-widest">MISSION SPECIALIST</h2>
+        <div id="picker-display" class="text-6xl font-bold text-yellow-400 font-sci-fi mb-12 h-20">READY</div>
+        <button onclick="startPicking()" class="bg-pink-600 hover:bg-pink-500 text-white font-sci-fi text-2xl py-4 px-12 rounded-full shadow-[0_0_40px_rgba(219,39,119,0.6)] active:scale-95 transition">
+            SPIN
+        </button>
+    </div>
+
+    <script>
+        // --- GAME DATA (Unit 3 Content) ---
+        const questions = [
+            // Part B: Vocabulary
+            { t: "We must not _______ the rivers with trash.", a: "pollute", c: "VOCAB" },
+            { t: "_______ makes everything fall to the ground.", a: "Gravity", c: "VOCAB" },
+            { t: "The _______ wore a suit to walk in space.", a: "astronaut", c: "VOCAB" },
+            { t: "I need to _______ the book I borrowed.", a: "return", c: "VOCAB" },
+            { t: "Fish cannot _______ outside of water.", a: "breathe", c: "VOCAB" },
+            { t: "She told me a _______ and asked me not to share it.", a: "secret", c: "VOCAB" },
+            { t: "I sat down in the _______ near the window.", a: "seat", c: "VOCAB" },
+            { t: "The storm can _______ houses and trees.", a: "destroy", c: "VOCAB" },
+            { t: "The _______ took many pictures of the Eiffel Tower.", a: "tourist", c: "VOCAB" },
+            { t: "The car _______ stopped with a loud noise.", a: "suddenly", c: "VOCAB" },
+            { t: "In the cave, my voice made a loud _______.", a: "echo", c: "VOCAB" },
+            { t: "She gave me a birthday _______ wrapped in blue paper.", a: "present", c: "VOCAB" },
+            { t: "A _______ like water can fill any cup.", a: "liquid", c: "VOCAB" },
+            { t: "The remote is used to _______ the TV.", a: "control", c: "VOCAB" },
+            { t: "Running uses a lot of _______ and makes me tired.", a: "energy", c: "VOCAB" },
+            // Part C: Past Tense
+            { t: "Past Tense: MAKE", a: "made", c: "PAST TENSE" },
+            { t: "Past Tense: LOSE", a: "lost", c: "PAST TENSE" },
+            { t: "Past Tense: SEND", a: "sent", c: "PAST TENSE" },
+            { t: "Past Tense: MEET", a: "met", c: "PAST TENSE" },
+            { t: "Past Tense: RIDE", a: "rode", c: "PAST TENSE" },
+            { t: "Past Tense: RUN", a: "ran", c: "PAST TENSE" },
+            { t: "Past Tense: PAY", a: "paid", c: "PAST TENSE" },
+            { t: "Past Tense: READ", a: "read", c: "PAST TENSE" }
+        ];
+
+        // --- STATE ---
+        let qIndex = -1;
+        let shuffledQ = [];
+        let rocketPos = [0, 0, 0, 0]; // 0-100%
+        const WIN_PCT = 88; // Where the planet is roughly
+        
+        // --- AUDIO ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playTone(freq, type, duration, startTime=0) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime + startTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime + startTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + startTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(audioCtx.currentTime + startTime);
+            osc.stop(audioCtx.currentTime + startTime + duration);
+        }
+
+        function playEngine() {
+            // Low rumble
+            playTone(100, 'sawtooth', 0.3);
+            playTone(80, 'square', 0.3, 0.1);
+        }
+
+        function playWin() {
+            [0, 0.15, 0.3, 0.45, 0.6].forEach((t, i) => {
+                playTone(400 + (i*100), 'square', 0.3, t);
+            });
+        }
+        
+        function playSwoosh() { playTone(300, 'sine', 0.2); }
+        function playTick() { playTone(800, 'square', 0.05); }
+
+        // --- GAME LOGIC ---
+        function initGame() {
+            // Shuffle questions
+            shuffledQ = [...questions].sort(() => Math.random() - 0.5);
+            document.getElementById('q-total').innerText = shuffledQ.length;
+            
+            // Generate Stars
+            const starsContainer = document.getElementById('stars');
+            for(let i=0; i<50; i++) {
+                const s = document.createElement('div');
+                s.className = 'star';
+                s.style.left = Math.random()*100 + '%';
+                s.style.top = Math.random()*100 + '%';
+                s.style.width = Math.random()*3 + 'px';
+                s.style.height = s.style.width;
+                s.style.setProperty('--duration', (Math.random()*3+2)+'s');
+                s.style.setProperty('--opacity', Math.random());
+                starsContainer.appendChild(s);
+            }
+        }
+
+        function nextQuestion() {
+            playSwoosh();
+            document.getElementById('start-btn-container').style.display = 'none';
+            qIndex++;
+            if(qIndex >= shuffledQ.length) {
+                document.getElementById('question-text').innerText = "MISSION COMPLETE!";
+                document.getElementById('answer-text').classList.add('hidden');
+                document.getElementById('category-badge').innerText = "END";
+                return;
+            }
+
+            const q = shuffledQ[qIndex];
+            // Added question number here: Q1. ...
+            document.getElementById('question-text').innerText = `Q${qIndex + 1}. ${q.t}`;
+            document.getElementById('answer-text').classList.add('hidden');
+            document.getElementById('answer-text').innerText = q.a;
+            
+            const badge = document.getElementById('category-badge');
+            badge.innerText = q.c;
+            badge.className = `absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-4 py-1 rounded-full text-xs font-sci-fi tracking-widest uppercase border ${q.c === 'VOCAB' ? 'bg-blue-900 border-blue-500 text-blue-300' : 'bg-green-900 border-green-500 text-green-300'}`;
+
+            document.getElementById('q-counter').innerText = qIndex + 1;
+        }
+
+        function revealAnswer() {
+            playTone(600, 'sine', 0.1);
+            playTone(1200, 'sine', 0.2, 0.1);
+            document.getElementById('answer-text').classList.remove('hidden');
+        }
+
+        function boostRocket(teamIdx) {
+            playEngine();
+            const rocket = document.getElementById(`rocket-${teamIdx}`);
+            
+            // Add Engine Effect
+            rocket.classList.add('moving');
+            setTimeout(() => rocket.classList.remove('moving'), 500);
+
+            // Move
+            rocketPos[teamIdx] += 10; // 10 steps to win roughly
+            if(rocketPos[teamIdx] > WIN_PCT) rocketPos[teamIdx] = WIN_PCT;
+            
+            rocket.style.left = (rocketPos[teamIdx] + 2) + '%'; // +2 offset
+
+            // Check Win
+            if(rocketPos[teamIdx] >= WIN_PCT) {
+                setTimeout(() => {
+                    playWin();
+                    triggerConfetti();
+                    alert(`TEAM ${['A','B','C','D'][teamIdx]} WINS THE RACE TO MARS! 🚀`);
+                }, 800);
+            }
+        }
+
+        function resetRace() {
+            rocketPos = [0,0,0,0];
+            for(let i=0; i<4; i++) {
+                document.getElementById(`rocket-${i}`).style.left = '2%';
+            }
+            qIndex = -1;
+            initGame();
+            document.getElementById('start-btn-container').style.display = 'block';
+            document.getElementById('question-text').innerText = "Are you ready, Cadets?";
+            document.getElementById('answer-text').classList.add('hidden');
+            document.getElementById('q-counter').innerText = 0;
+        }
+
+        // --- PICKER ---
+        const students = ["Elsa", "Emma", "Ryan", "Vincent", "Rebecca", "William", "Leo", "Kube", "Yunny", "Fiona", "Dora", "Jeremy", "Robben", "Eason", "Brian", "Zac", "Winny", "Cynthia", "Linus", "Sophia"];
+        
+        function openPicker() {
+            document.getElementById('picker-modal').classList.remove('hidden');
+            document.getElementById('picker-modal').classList.add('flex');
+        }
+        function closePicker() {
+            document.getElementById('picker-modal').classList.add('hidden');
+            document.getElementById('picker-modal').classList.remove('flex');
+        }
+        function startPicking() {
+            let count = 0;
+            const max = 20;
+            const disp = document.getElementById('picker-display');
+            const interval = setInterval(() => {
+                playTick();
+                disp.innerText = students[Math.floor(Math.random() * students.length)];
+                count++;
+                if(count > max) {
+                    clearInterval(interval);
+                    playTone(600, 'square', 0.5);
+                }
+            }, 60);
+        }
+
+        // --- CONFETTI ---
+        function triggerConfetti() {
+            for(let i=0; i<50; i++) {
+                const c = document.createElement('div');
+                c.className = 'confetti';
+                c.style.left = Math.random()*100 + 'vw';
+                c.style.backgroundColor = ['#ef4444', '#3b82f6', '#22c55e', '#eab308'][Math.floor(Math.random()*4)];
+                c.style.animationDuration = (Math.random()*2+1) + 's';
+                document.body.appendChild(c);
+                setTimeout(() => c.remove(), 3000);
+            }
+        }
+
+        // Init
+        initGame();
+
+    </script>
+</body>
+</html>
