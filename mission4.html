@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>English Vocabulary Game V6</title>
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #2c3e50;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        color: white;
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        user-select: none; /* 防止連點選取文字 */
+    }
+
+    /* === 通用 UI === */
+    h1 { margin: 15px 0; font-size: 1.5rem; text-shadow: 2px 2px 0 #000; }
+    
+    .screen {
+        display: none;
+        width: 100%;
+        height: 100%;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+    
+    .screen.active { display: flex; }
+
+    button {
+        cursor: pointer;
+        font-family: inherit;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+        touch-action: manipulation; /* 優化觸控反應 */
+    }
+    button:active { transform: scale(0.96); }
+
+    /* === 0. 啟動遮罩 === */
+    #start-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.95); z-index: 999;
+    }
+    .big-start-btn {
+        background: #27ae60; color: white; border: none;
+        padding: 20px 60px; font-size: 24px; border-radius: 50px;
+        box-shadow: 0 6px 0 #219150;
+        transition: all 0.1s;
+        margin-bottom: 20px;
+    }
+    .big-start-btn:active {
+        background: #2ecc71;
+        transform: translateY(4px);
+        box-shadow: 0 2px 0 #219150;
+    }
+    .debug-text {
+        font-size: 12px; color: #7f8c8d; margin-top: 10px; font-family: monospace;
+    }
+
+    /* === 1. 主選單 (Menu) === */
+    .menu-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 15px;
+        width: 100%;
+        max-width: 400px;
+        overflow-y: auto;
+        padding-bottom: 20px;
+    }
+    .menu-btn {
+        padding: 20px;
+        border: none;
+        border-radius: 15px;
+        font-size: 18px;
+        font-weight: bold;
+        color: white;
+        text-align: left;
+        position: relative;
+        box-shadow: 0 5px 0 rgba(0,0,0,0.2);
+    }
+    .menu-btn::after {
+        content: '▶'; position: absolute; right: 20px; opacity: 0.5;
+    }
+    .g1-btn { background: #e74c3c; } 
+    .g2-btn { background: #f39c12; } 
+    .g3-btn { background: #8e44ad; } 
+    .g4-btn { background: #3498db; } 
+
+    /* === 2. 遊戲畫面 (Game) === */
+    .progress-bar {
+        width: 100%; max-width: 400px; height: 10px;
+        background: #34495e; border-radius: 5px; margin-bottom: 20px;
+        overflow: hidden;
+    }
+    .progress-fill {
+        height: 100%; background: #f1c40f; width: 0%; transition: width 0.3s;
+    }
+
+    .card-display {
+        background: white;
+        color: #2c3e50;
+        width: 100%; max-width: 350px;
+        padding: 30px 20px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 0 rgba(0,0,0,0.2);
+        position: relative;
+        min-height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    .english-word { font-size: 32px; font-weight: bold; display: block; margin-bottom: 10px; word-break: break-word;}
+    .replay-icon { 
+        font-size: 24px; color: #3498db; cursor: pointer; 
+        background: #ecf0f1; border-radius: 50%; width: 50px; height: 50px;
+        display: inline-flex; justify-content: center; align-items: center;
+        box-shadow: 0 3px 0 rgba(0,0,0,0.1);
+    }
+    .replay-icon:active { transform: scale(0.95); background: #dcdde1; }
+
+    .options-grid {
+        display: grid; grid-template-columns: 1fr; gap: 12px;
+        width: 100%; max-width: 350px;
+    }
+    .option-btn {
+        background: #34495e; color: white;
+        border: none; padding: 15px; border-radius: 10px;
+        font-size: 20px; box-shadow: 0 4px 0 #2c3e50;
+        transition: background 0.2s;
+    }
+    .option-btn:hover { background: #3e5871; } /* 電腦版滑鼠懸停效果 */
+    
+    .correct { background: #2ecc71 !important; box-shadow: 0 4px 0 #27ae60 !important; }
+    .wrong { background: #e74c3c !important; opacity: 0.6; }
+
+    /* === 3. 結算畫面 (Result) === */
+    .score-circle {
+        width: 150px; height: 150px;
+        background: white; border-radius: 50%;
+        color: #2c3e50; display: flex;
+        justify-content: center; align-items: center;
+        font-size: 60px; font-weight: bold;
+        margin-bottom: 20px;
+        border: 8px solid #f1c40f;
+    }
+    .home-btn {
+        background: #95a5a6; color: white;
+        padding: 15px 40px; border-radius: 30px;
+        border: none; font-size: 18px; margin-top: 30px;
+    }
+
+</style>
+</head>
+<body>
+
+    <!-- 0. 啟動層 -->
+    <div id="start-overlay" class="screen active">
+        <div style="font-size:60px; margin-bottom:20px;">🎮</div>
+        <h2 style="margin-bottom:30px;">準備好挑戰了嗎？</h2>
+        
+        <!-- START 按鈕 -->
+        <button id="start-btn" class="big-start-btn" onclick="forceStart()">START</button>
+        
+        <p style="opacity:0.6; margin-top:10px; font-size:14px;">點擊開始進入遊戲</p>
+        <div id="debug-status" class="debug-text">System initializing...</div>
+    </div>
+
+    <!-- 1. 主選單 -->
+    <div id="menu-screen" class="screen">
+        <h1>🏆 單字大挑戰</h1>
+        <p style="margin-bottom: 30px; opacity: 0.8;">請選擇要挑戰的關卡</p>
+        
+        <div class="menu-grid">
+            <button class="menu-btn g1-btn" onclick="startGame('g1')">
+                Week 8 - Group 1<br><small>歷史與文明 (History)</small>
+            </button>
+            <button class="menu-btn g2-btn" onclick="startGame('g2')">
+                Week 8 - Group 2<br><small>發明與生活 (Invention)</small>
+            </button>
+            <button class="menu-btn g3-btn" onclick="startGame('g3')">
+                Week 9 - Group 3<br><small>後院寶藏 (Treasure)</small>
+            </button>
+            <button class="menu-btn g4-btn" onclick="startGame('g4')">
+                Week 9 - Group 4<br><small>古老建築 (Ancient)</small>
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. 遊戲畫面 -->
+    <div id="game-screen" class="screen">
+        <button onclick="goHome()" style="background:none; border:none; color:white; align-self:flex-start; margin-bottom:10px; font-size:16px;">⬅ 回選單 (Menu)</button>
+        <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+        
+        <div class="card-display">
+            <span id="q-word" class="english-word">Loading...</span>
+            <div class="replay-icon" onclick="replayAudio()">🔊</div>
+        </div>
+
+        <div id="options-container" class="options-grid">
+            <!-- 選項按鈕由 JS 產生 -->
+        </div>
+    </div>
+
+    <!-- 3. 結算畫面 -->
+    <div id="result-screen" class="screen">
+        <h1>挑戰完成！</h1>
+        <div class="score-circle" id="final-score">0</div>
+        <h2 id="feedback-text">Good Job!</h2>
+        <button class="home-btn" onclick="goHome()">🏠 回主選單</button>
+    </div>
+
+<script>
+    // === 資料庫 ===
+    const gameData = {
+        g1: [
+            { en: "exhibition", ch: "展覽" }, { en: "century", ch: "世紀" },
+            { en: "capital", ch: "首都 / 資金" }, { en: "empire", ch: "帝國" },
+            { en: "pyramid", ch: "金字塔" }
+        ],
+        g2: [
+            { en: "jewelry", ch: "珠寶" }, { en: "invent", ch: "發明" },
+            { en: "calendar", ch: "日曆" }, { en: "built", ch: "建造(過去式)" },
+            { en: "feather", ch: "羽毛" }
+        ],
+        g3: [
+            { en: "backyard", ch: "後院" }, { en: "pottery", ch: "陶器" },
+            { en: "metal", ch: "金屬" }, { en: "treasure", ch: "寶藏" },
+            { en: "middle", ch: "中間" }
+        ],
+        g4: [
+            { en: "ancient", ch: "古代的" }, { en: "building", ch: "建築物" },
+            { en: "maize", ch: "玉米" }, { en: "keyhole", ch: "鑰匙孔" },
+            { en: "summary", ch: "摘要" }
+        ]
+    };
+
+    // 收集所有中文解釋
+    let allDefinitions = [];
+    Object.values(gameData).forEach(group => {
+        group.forEach(item => allDefinitions.push(item.ch));
+    });
+
+    // === 系統變數 ===
+    let currentGroupData = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let isAnswering = false; 
+    let synth = window.speechSynthesis;
+    let selectedVoice = null;
+
+    // === 1. 初始化檢查 (Debug Info) ===
+    function checkAudioStatus() {
+        const debugEl = document.getElementById('debug-status');
+        if (!synth) {
+            debugEl.innerText = "Audio Engine: Not supported (Silent Mode)";
+            return;
+        }
+        const voices = synth.getVoices();
+        if (voices.length > 0) {
+            debugEl.innerText = `Audio Engine: Ready (${voices.length} voices found)`;
+        } else {
+            debugEl.innerText = "Audio Engine: Loading voices...";
+        }
+    }
+    
+    // 週期性檢查聲音載入狀況
+    setInterval(checkAudioStatus, 1000);
+    if (synth && synth.onvoiceschanged !== undefined) {
+        synth.onvoiceschanged = checkAudioStatus;
+    }
+
+    // === 2. 強制啟動 (核心修復) ===
+    function forceStart() {
+        const btn = document.getElementById('start-btn');
+        btn.innerText = "Starting..."; 
+        
+        // A. 嘗試播放聲音 (如果有錯直接忽略，不阻擋)
+        try {
+            if (synth) {
+                synth.cancel();
+                const u = new SpeechSynthesisUtterance("Welcome");
+                u.volume = 0.5; 
+                synth.speak(u);
+                
+                // 嘗試抓取最佳聲音
+                const voices = synth.getVoices();
+                selectedVoice = voices.find(v => v.name === 'Samantha') || 
+                                voices.find(v => v.lang === 'en-US' && !v.name.includes('Compact')) ||
+                                voices.find(v => v.lang === 'en-US');
+            }
+        } catch (e) {
+            console.warn("Audio init warning:", e);
+        }
+
+        // B. 無論如何，300ms 後強制切換畫面
+        setTimeout(() => {
+            document.getElementById('start-overlay').classList.remove('active');
+            document.getElementById('menu-screen').classList.add('active');
+        }, 300);
+    }
+
+    // === 3. 遊戲流程 ===
+    function startGame(groupId) {
+        currentGroupData = [...gameData[groupId]]; 
+        currentGroupData.sort(() => Math.random() - 0.5); // 洗牌
+        
+        currentQuestionIndex = 0;
+        score = 0;
+        
+        document.getElementById('menu-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.add('active');
+        
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        if (currentQuestionIndex >= currentGroupData.length) {
+            endGame();
+            return;
+        }
+
+        isAnswering = false;
+        const currentQ = currentGroupData[currentQuestionIndex];
+        
+        // 更新 UI
+        document.getElementById('q-word').innerText = currentQ.en;
+        document.getElementById('progress-fill').style.width = 
+            ((currentQuestionIndex) / currentGroupData.length * 100) + '%';
+
+        // 產生選項
+        const options = generateOptions(currentQ.ch);
+        const container = document.getElementById('options-container');
+        container.innerHTML = ''; 
+
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt;
+            // 直接使用 onclick，避免 PC/Mobile 衝突
+            btn.onclick = function() { checkAnswer(this, opt, currentQ.ch); };
+            container.appendChild(btn);
+        });
+
+        // 自動播放聲音
+        setTimeout(() => speak(currentQ.en), 300);
+    }
+
+    function generateOptions(correctAnswer) {
+        let opts = [correctAnswer];
+        let safety = 0;
+        while (opts.length < 3 && safety < 50) {
+            const randomDef = allDefinitions[Math.floor(Math.random() * allDefinitions.length)];
+            if (!opts.includes(randomDef)) opts.push(randomDef);
+            safety++;
+        }
+        return opts.sort(() => Math.random() - 0.5);
+    }
+
+    function checkAnswer(btn, selected, correct) {
+        if (isAnswering) return;
+        isAnswering = true;
+
+        if (selected === correct) {
+            btn.classList.add('correct');
+            score += 100; 
+            speak("Correct"); 
+        } else {
+            btn.classList.add('wrong');
+            // 標示正確答案
+            const buttons = container = document.getElementById('options-container').children;
+            for(let b of buttons) {
+                if(b.innerText === correct) b.classList.add('correct');
+            }
+            speak("Nice try");
+        }
+
+        setTimeout(() => {
+            currentQuestionIndex++;
+            loadQuestion();
+        }, 1500);
+    }
+
+    function endGame() {
+        document.getElementById('game-screen').classList.remove('active');
+        document.getElementById('result-screen').classList.add('active');
+        
+        const finalScore = score;
+        const maxScore = currentGroupData.length * 100;
+        document.getElementById('final-score').innerText = finalScore;
+        
+        const feedback = document.getElementById('feedback-text');
+        if (finalScore === maxScore) {
+            feedback.innerText = "🌟 太完美了！全對！";
+            speak("Perfect score!");
+        } else if (finalScore >= maxScore * 0.6) {
+            feedback.innerText = "👍 很棒喔！繼續加油！";
+            speak("Good job!");
+        } else {
+            feedback.innerText = "💪 再練習一次會更好！";
+            speak("Keep practicing!");
+        }
+    }
+
+    function goHome() {
+        document.getElementById('result-screen').classList.remove('active');
+        document.getElementById('game-screen').classList.remove('active');
+        document.getElementById('menu-screen').classList.add('active');
+    }
+
+    function replayAudio() {
+        const word = document.getElementById('q-word').innerText;
+        speak(word);
+    }
+
+    function speak(text) {
+        if (!synth) return;
+        try {
+            synth.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            if (selectedVoice) u.voice = selectedVoice;
+            u.lang = 'en-US';
+            u.rate = 0.9;
+            synth.speak(u);
+        } catch(e) {
+            console.error("Speak error:", e);
+        }
+    }
+
+</script>
+</body>
+</html>
