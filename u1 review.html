@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>單字獵人：荒島逃生記</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Noto+Sans+TC:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+            background-color: #e0f2fe;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        .game-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.9);
+            border: 4px solid #3b82f6;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to bottom, #60a5fa, #2563eb);
+            border-bottom: 4px solid #1e40af;
+            transition: all 0.1s;
+        }
+
+        .btn-primary:active {
+            transform: translateY(4px);
+            border-bottom: 0px solid #1e40af;
+        }
+
+        .btn-option {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-bottom: 4px solid #d1d5db;
+            transition: all 0.1s;
+        }
+
+        .btn-option:active {
+            transform: translateY(4px);
+            border-bottom: 0px;
+        }
+
+        .btn-option.correct {
+            background-color: #dcfce7;
+            border-color: #22c55e;
+            color: #15803d;
+        }
+
+        .btn-option.wrong {
+            background-color: #fee2e2;
+            border-color: #ef4444;
+            color: #b91c1c;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
+        }
+
+        .float-anim {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        /* Draggable letters */
+        .letter-tile {
+            background: #fff;
+            border: 2px solid #3b82f6;
+            border-bottom: 4px solid #2563eb;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s;
+        }
+        .letter-tile:active {
+            transform: scale(0.95);
+        }
+        .letter-tile.used {
+            opacity: 0.3;
+            pointer-events: none;
+            border: 2px solid #ccc;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 bg-[url('https://img.freepik.com/free-vector/tropical-island-landscape-cartoon-style_1308-51206.jpg?w=1380')] bg-cover bg-center bg-no-repeat fixed inset-0">
+    <div class="absolute inset-0 bg-black/30"></div>
+
+    <!-- MAIN CONTAINER -->
+    <div id="app" class="relative z-10 w-full max-w-2xl">
+        
+        <!-- INTRO SCREEN -->
+        <div id="intro-screen" class="game-card rounded-3xl p-8 text-center animate-fade-in">
+            <h1 class="text-4xl md:text-5xl font-bold text-blue-600 mb-2 drop-shadow-sm tracking-wide">🏝️ 單字獵人</h1>
+            <p class="text-xl text-gray-600 mb-6 font-bold">荒島求生記 (Island Escape)</p>
+            
+            <div class="bg-blue-50 p-4 rounded-xl mb-6 text-left">
+                <p class="mb-2 text-gray-700">👋 嗨！小小探險家！</p>
+                <p class="text-gray-600 text-sm">我們被困在無人島上了！你需要回答單字問題來收集工具、建造木筏並逃離這裡。</p>
+            </div>
+
+            <p class="text-gray-700 font-bold mb-3">你要挑戰哪一週的單字？</p>
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <button onclick="startGame(3)" class="btn-option rounded-xl p-3 font-bold text-gray-600 hover:bg-blue-50">Week 3 (探險篇)</button>
+                <button onclick="startGame(4)" class="btn-option rounded-xl p-3 font-bold text-gray-600 hover:bg-blue-50">Week 4 (裝備篇)</button>
+                <button onclick="startGame(5)" class="btn-option rounded-xl p-3 font-bold text-gray-600 hover:bg-blue-50">Week 5 (海盜篇)</button>
+                <button onclick="startGame(6)" class="btn-option rounded-xl p-3 font-bold text-gray-600 hover:bg-blue-50">Week 6 (通訊篇)</button>
+            </div>
+            <button onclick="startGame('all')" class="btn-primary w-full rounded-2xl p-4 text-white text-xl font-bold shadow-lg transform hover:-translate-y-1">
+                🚀 全部挑戰 (All Weeks)
+            </button>
+        </div>
+
+        <!-- GAME SCREEN -->
+        <div id="game-screen" class="hidden">
+            <!-- HUD -->
+            <div class="flex justify-between items-center mb-4">
+                <div class="bg-white/90 rounded-full px-4 py-2 font-bold text-blue-600 border-2 border-blue-200 flex items-center gap-2">
+                    <span>⭐</span> <span id="score-display">0</span>
+                </div>
+                <div class="bg-white/90 rounded-full px-4 py-2 font-bold text-red-500 border-2 border-red-200 flex items-center gap-2">
+                    <span>❤️</span> <span id="lives-display">3</span>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div class="game-card rounded-3xl p-6 min-h-[400px] flex flex-col justify-between">
+                
+                <!-- Progress -->
+                <div class="w-full bg-gray-200 rounded-full h-3 mb-6 overflow-hidden border border-gray-300">
+                    <div id="progress-bar" class="bg-green-500 h-3 rounded-full progress-bar" style="width: 0%"></div>
+                </div>
+
+                <!-- Content Area -->
+                <div class="flex-grow flex flex-col items-center justify-center text-center">
+                    
+                    <!-- Question Type Label -->
+                    <span id="q-type" class="text-xs font-bold tracking-wider text-gray-400 uppercase mb-2 bg-gray-100 px-2 py-1 rounded">Question Type</span>
+                    
+                    <!-- The Question/Image -->
+                    <div class="mb-6 w-full">
+                        <div id="q-image" class="text-6xl mb-4 float-anim hidden">🎒</div>
+                        <h2 id="q-text" class="text-2xl md:text-3xl font-bold text-gray-800 mb-2 leading-tight">Question Text</h2>
+                        <p id="q-sub" class="text-gray-500 text-lg italic">Secondary text</p>
+                    </div>
+
+                    <!-- Interaction Area (Buttons or Spelling) -->
+                    <div id="interaction-area" class="w-full grid gap-3">
+                        <!-- Dynamic Content injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULT SCREEN -->
+        <div id="result-screen" class="hidden game-card rounded-3xl p-8 text-center animate-fade-in">
+            <div id="result-icon" class="text-7xl mb-4">🏆</div>
+            <h2 id="result-title" class="text-3xl font-bold text-gray-800 mb-2">任務完成！</h2>
+            <p id="result-msg" class="text-gray-600 mb-6">你成功逃離了荒島！</p>
+            
+            <div class="bg-white rounded-xl p-4 border-2 border-gray-200 mb-6 max-h-60 overflow-y-auto text-left">
+                <h3 class="font-bold text-gray-700 mb-2 border-b pb-1">需複習的單字：</h3>
+                <ul id="mistake-list" class="text-sm text-gray-600 space-y-2">
+                    <!-- Mistakes injected here -->
+                    <li class="text-center italic text-gray-400">太棒了！沒有錯誤單字！</li>
+                </ul>
+            </div>
+
+            <button onclick="location.reload()" class="btn-primary w-full rounded-2xl p-4 text-white text-xl font-bold shadow-lg">
+                🔄 再玩一次
+            </button>
+        </div>
+
+    </div>
+
+    <!-- CONFETTI CANVAS (Hidden usually) -->
+    <canvas id="confetti" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <script>
+        // --- DATA ---
+        // A1-A2 friendly definitions and sentences
+        const vocabData = [
+            // Week 3
+            { id: 1, w: "balance", week: 3, type: "v/n", def: "To keep steady and not fall.", sent: "It is hard to ___ on one foot.", emo: "⚖️" },
+            { id: 2, w: "collect", week: 3, type: "v", def: "To bring things together.", sent: "I like to ___ seashells on the beach.", emo: "🐚" },
+            { id: 3, w: "make a camp", week: 3, type: "phr", def: "To set up a place to sleep outside.", sent: "Let's ___ near the river for the night.", emo: "⛺" },
+            { id: 4, w: "swing", week: 3, type: "v", def: "To move back and forth.", sent: "Monkeys ___ from tree to tree.", emo: "🐒" },
+            { id: 5, w: "branch", week: 3, type: "n", def: "The arm of a tree.", sent: "The bird sat on a high ___.", emo: "🌿" },
+            { id: 6, w: "explore", week: 3, type: "v", def: "To travel to learn about a place.", sent: "We want to ___ the dark cave.", emo: "🗺️" },
+            { id: 7, w: "adventure", week: 3, type: "n", def: "An exciting journey.", sent: "Going to the jungle is a big ___.", emo: "🤠" },
+            { id: 8, w: "lighthouse", week: 3, type: "n", def: "A tower with a light for ships.", sent: "The ___ warns ships about the rocks.", emo: "🏮" },
+            { id: 9, w: "shipwreck", week: 3, type: "n", def: "A destroyed ship.", sent: "Divers found gold in the old ___.", emo: "🚢" },
+            { id: 10, w: "whistle", week: 3, type: "v/n", def: "To make a high sound with your mouth.", sent: "Please ___ if you need help.", emo: "😗" },
+            { id: 11, w: "compass", week: 3, type: "n", def: "A tool to find North.", sent: "We need a ___ so we don't get lost.", emo: "🧭" },
+            { id: 12, w: "search", week: 3, type: "v", def: "To look for something carefully.", sent: "Help me ___ for my keys.", emo: "🔍" },
+            { id: 13, w: "flash", week: 3, type: "v/n", def: "A sudden bright light.", sent: "I saw a ___ of lightning.", emo: "📸" },
+            { id: 14, w: "blow", week: 3, type: "v", def: "To move air.", sent: "The wind began to ___ very hard.", emo: "🌬️" },
+            { id: 15, w: "get lost", week: 3, type: "phr", def: "Not knowing where you are.", sent: "Stay together so you don't ___.", emo: "❓" },
+
+            // Week 4
+            { id: 16, w: "blanket", week: 4, type: "n", def: "A warm cover for sleeping.", sent: "It is cold, please give me a ___.", emo: "🛌" },
+            { id: 17, w: "matches", week: 4, type: "n", def: "Small sticks to start a fire.", sent: "Do you have ___ to light the candle?", emo: "🔥" },
+            { id: 18, w: "wheel", week: 4, type: "n", def: "A round object that turns.", sent: "The car has a flat ___.", emo: "🎡" },
+            { id: 19, w: "boots", week: 4, type: "n", def: "Strong shoes for winter or hiking.", sent: "Put on your ___ before walking in the mud.", emo: "👢" },
+            { id: 20, w: "gloves", week: 4, type: "n", def: "Clothing for your hands.", sent: "Wear ___ to keep your hands warm.", emo: "🧤" },
+            { id: 21, w: "cross", week: 4, type: "v", def: "To go from one side to the other.", sent: "Be careful when you ___ the street.", emo: "🚶" },
+            { id: 22, w: "stream", week: 4, type: "n", def: "A small river.", sent: "We can drink water from the fresh ___.", emo: "💧" },
+            { id: 23, w: "flow", week: 4, type: "v", def: "To move like water.", sent: "Rivers ___ into the sea.", emo: "🌊" },
+            { id: 24, w: "equipment", week: 4, type: "n", def: "Tools you need for a job or sport.", sent: "We need camping ___ like tents and bags.", emo: "🛠️" },
+            { id: 25, w: "dictionary", week: 4, type: "n", def: "A book of words and meanings.", sent: "Look up the word in the ___.", emo: "📖" },
+            { id: 26, w: "crash", week: 4, type: "v", def: "To hit something hard.", sent: "The car might ___ if you drive too fast.", emo: "💥" },
+            { id: 27, w: "message", week: 4, type: "n", def: "Information sent to someone.", sent: "I sent a text ___ to my mom.", emo: "💬" },
+            { id: 28, w: "location", week: 4, type: "n", def: "A specific place.", sent: "The map shows our current ___.", emo: "📍" },
+            { id: 29, w: "useful", week: 4, type: "adj", def: "Helpful, good to use.", sent: "A knife is very ___ for camping.", emo: "👍" },
+            { id: 30, w: "item", week: 4, type: "n", def: "A single thing.", sent: "Check every ___ on your shopping list.", emo: "📦" },
+
+            // Week 5
+            { id: 31, w: "tree house", week: 5, type: "n", def: "A small house built in a tree.", sent: "The kids played in the ___.", emo: "🏡" },
+            { id: 32, w: "bridge", week: 5, type: "n", def: "A road over water.", sent: "We walked across the ___.", emo: "🌉" },
+            { id: 33, w: "plans", week: 5, type: "n", def: "Ideas about what to do in the future.", sent: "What are your ___ for the weekend?", emo: "📝" },
+            { id: 34, w: "partner", week: 5, type: "n", def: "Someone you work or play with.", sent: "Work with a ___ to finish the homework.", emo: "🤝" },
+            { id: 35, w: "knife", week: 5, type: "n", def: "A sharp tool for cutting.", sent: "Use a ___ to cut the apple.", emo: "🔪" },
+            { id: 36, w: "describe", week: 5, type: "v", def: "To say what something looks like.", sent: "Can you ___ the thief?", emo: "🗣️" },
+            { id: 37, w: "pirate", week: 5, type: "n", def: "A thief on the sea.", sent: "The ___ had a parrot on his shoulder.", emo: "☠️" },
+            { id: 38, w: "follow", week: 5, type: "v", def: "To go behind someone.", sent: "___ me, I know the way.", emo: "👣" },
+            { id: 39, w: "cable", week: 5, type: "n", def: "A thick strong rope or wire.", sent: "The bridge hangs from a steel ___.", emo: "🔌" },
+            { id: 40, w: "imagine", week: 5, type: "v", def: "To make a picture in your mind.", sent: "Can you ___ living on the moon?", emo: "💭" },
+            { id: 41, w: "opposite", week: 5, type: "adj", def: "Very different; on the other side.", sent: "Hot is the ___ of cold.", emo: "↔️" },
+            { id: 42, w: "direction", week: 5, type: "n", def: "Which way to go (North, South, etc).", sent: "Which ___ is the beach?", emo: "⬆️" },
+            { id: 43, w: "outdoors", week: 5, type: "adv/n", def: "Not inside a building.", sent: "I love to play ___ in the summer.", emo: "🏞️" },
+            { id: 44, w: "sailboat", week: 5, type: "n", def: "A boat moved by wind.", sent: "The wind pushed the ___ across the lake.", emo: "⛵" },
+            { id: 45, w: "local", week: 5, type: "adj", def: "From nearby; not far away.", sent: "We bought fruit from a ___ market.", emo: "🏘️" },
+
+            // Week 6
+            { id: 46, w: "triangle", week: 6, type: "n", def: "A shape with three sides.", sent: "A slice of pizza looks like a ___.", emo: "🔺" },
+            { id: 47, w: "bottle", week: 6, type: "n", def: "A container for liquids.", sent: "Please fill the water ___.", emo: "🍾" },
+            { id: 48, w: "connect", week: 6, type: "v", def: "To join things together.", sent: "Can you ___ the computer to the internet?", emo: "🔌" },
+            { id: 49, w: "popsicle sticks", week: 6, type: "n", def: "Small wood sticks from ice cream.", sent: "We built a house with ___.", emo: "🍦" },
+            { id: 50, w: "clay", week: 6, type: "n", def: "Heavy earth used to make pots.", sent: "She made a bowl out of ___.", emo: "🏺" },
+            { id: 51, w: "strength", week: 6, type: "n", def: "Being strong.", sent: "He used all his ___ to lift the rock.", emo: "💪" },
+            { id: 52, w: "schedule", week: 6, type: "n", def: "A plan of times and events.", sent: "What is your class ___ today?", emo: "📅" },
+            { id: 53, w: "press", week: 6, type: "v", def: "To push firmly.", sent: "___ the button to start the machine.", emo: "👇" },
+            { id: 54, w: "information", week: 6, type: "n", def: "Facts about something.", sent: "I need more ___ about the test.", emo: "ℹ️" },
+            { id: 55, w: "accident", week: 6, type: "n", def: "Something bad that happens by mistake.", sent: "He had a car ___.", emo: "🚑" },
+            { id: 56, w: "smash", week: 6, type: "v", def: "To break into pieces violently.", sent: "Don't ___ the window with the ball!", emo: "🔨" },
+            { id: 57, w: "took out", week: 6, type: "v", def: "Removed (past tense of take out).", sent: "He ___ his phone to take a photo.", emo: "🥡" },
+            { id: 58, w: "communication", week: 6, type: "n", def: "Sharing news or ideas.", sent: "Talking is a form of ___.", emo: "📡" },
+            { id: 59, w: "go sailing", week: 6, type: "phr", def: "To travel on water in a boat.", sent: "We will ___ on the lake today.", emo: "⛵" },
+            { id: 60, w: "experiment", week: 6, type: "n", def: "A scientific test.", sent: "We did a science ___ in class.", emo: "🧪" }
+        ];
+
+        // --- GAME STATE ---
+        let currentQueue = [];
+        let currentIndex = 0;
+        let score = 0;
+        let lives = 3;
+        let mistakes = [];
+        let isProcessing = false;
+
+        // --- DOM ELEMENTS ---
+        const screens = {
+            intro: document.getElementById('intro-screen'),
+            game: document.getElementById('game-screen'),
+            result: document.getElementById('result-screen')
+        };
+        const elScore = document.getElementById('score-display');
+        const elLives = document.getElementById('lives-display');
+        const elProgress = document.getElementById('progress-bar');
+        const elQType = document.getElementById('q-type');
+        const elQImage = document.getElementById('q-image');
+        const elQText = document.getElementById('q-text');
+        const elQSub = document.getElementById('q-sub');
+        const elInteraction = document.getElementById('interaction-area');
+        const elMistakeList = document.getElementById('mistake-list');
+
+        // --- AUDIO (Using Browser Synth for accessibility) ---
+        const speak = (text) => {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+        };
+
+        // --- GAME LOGIC ---
+
+        function startGame(week) {
+            // Filter Data
+            if (week === 'all') {
+                currentQueue = [...vocabData];
+            } else {
+                currentQueue = vocabData.filter(item => item.week === week);
+            }
+            
+            // Shuffle
+            currentQueue.sort(() => Math.random() - 0.5);
+            // Limit to 20 questions max per session to keep it snappy (unless user wants all, but let's do 20 random for 'all')
+            if(week === 'all' && currentQueue.length > 25) {
+                 currentQueue = currentQueue.slice(0, 25);
+            }
+
+            // Reset State
+            currentIndex = 0;
+            score = 0;
+            lives = 3;
+            mistakes = [];
+            isProcessing = false;
+            
+            updateHUD();
+            switchScreen('game');
+            loadQuestion();
+        }
+
+        function switchScreen(name) {
+            Object.values(screens).forEach(el => el.classList.add('hidden'));
+            screens[name].classList.remove('hidden');
+        }
+
+        function updateHUD() {
+            elScore.innerText = score;
+            elLives.innerText = lives;
+            const progress = (currentIndex / currentQueue.length) * 100;
+            elProgress.style.width = `${progress}%`;
+        }
+
+        function loadQuestion() {
+            if (currentIndex >= currentQueue.length || lives <= 0) {
+                endGame();
+                return;
+            }
+
+            updateHUD();
+            const currentItem = currentQueue[currentIndex];
+            const qMode = Math.floor(Math.random() * 3); // 0: Meaning, 1: Sentence, 2: Spelling
+
+            elInteraction.innerHTML = '';
+            elQImage.innerText = currentItem.emo;
+            elQImage.classList.remove('hidden');
+            isProcessing = false;
+
+            // --- MODE 0: MEANING (Multiple Choice) ---
+            if (qMode === 0) {
+                elQType.innerText = "DEFINITION (字義測驗)";
+                elQText.innerText = currentItem.w;
+                elQSub.innerText = "What does this mean?";
+                // speak(currentItem.w);
+
+                const distractors = getDistractors(currentItem, 'def');
+                const options = shuffle([currentItem.def, ...distractors]);
+
+                options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = "btn-option w-full rounded-xl p-4 text-left font-medium text-gray-700 mb-2";
+                    btn.innerText = opt;
+                    btn.onclick = () => handleChoice(btn, opt === currentItem.def, currentItem);
+                    elInteraction.appendChild(btn);
+                });
+            }
+            // --- MODE 1: SENTENCE GAP (Multiple Choice) ---
+            else if (qMode === 1) {
+                elQType.innerText = "SENTENCE (文意測驗)";
+                const maskedSent = currentItem.sent.replace(new RegExp(currentItem.w, 'gi'), "_______");
+                elQText.innerText = maskedSent;
+                elQSub.innerText = "Fill in the blank.";
+                
+                const distractors = getDistractors(currentItem, 'w');
+                const options = shuffle([currentItem.w, ...distractors]);
+
+                options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = "btn-option w-full rounded-xl p-4 text-left font-bold text-lg text-blue-700 mb-2";
+                    btn.innerText = opt;
+                    btn.onclick = () => {
+                        // Speak the full sentence on click
+                        // speak(currentItem.sent);
+                        handleChoice(btn, opt === currentItem.w, currentItem);
+                    };
+                    elInteraction.appendChild(btn);
+                });
+            }
+            // --- MODE 2: SPELLING UNSCRAMBLE ---
+            else {
+                elQType.innerText = "SPELLING (拼字測驗)";
+                elQImage.innerText = currentItem.emo;
+                elQText.innerText = currentItem.def; // Show definition
+                elQSub.innerText = "Unscramble the word!";
+                
+                // For phrases like "make a camp", remove spaces for checking but handle UI logic
+                const cleanWord = currentItem.w.toLowerCase();
+                const scrambled = shuffle(cleanWord.split('').filter(c => c !== ' '));
+                let builtWord = "";
+
+                // Display Area for built word
+                const resultDisplay = document.createElement('div');
+                resultDisplay.className = "flex gap-1 justify-center mb-4 min-h-[50px] flex-wrap";
+                elInteraction.appendChild(resultDisplay);
+
+                // Letter Bank
+                const bank = document.createElement('div');
+                bank.className = "flex gap-2 justify-center flex-wrap";
+                
+                // Create letter tiles
+                scrambled.forEach((char, idx) => {
+                    const tile = document.createElement('div');
+                    tile.className = "letter-tile w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-lg font-bold text-xl text-blue-600 shadow-sm";
+                    tile.innerText = char;
+                    tile.onclick = () => {
+                        if(isProcessing) return;
+                        // Add to result
+                        const resTile = tile.cloneNode(true);
+                        resTile.onclick = null; // Can't remove for simplicity in this A2 version, just reset if wrong
+                        resultDisplay.appendChild(resTile);
+                        
+                        // Mark used
+                        tile.classList.add('used');
+                        
+                        // Check Logic
+                        builtWord += char;
+                        const targetNoSpaces = currentItem.w.replace(/\s/g, '').toLowerCase();
+                        
+                        if (builtWord.length === targetNoSpaces.length) {
+                            isProcessing = true;
+                            if (builtWord === targetNoSpaces) {
+                                resTile.classList.add('bg-green-100', 'border-green-500');
+                                speak(currentItem.w);
+                                setTimeout(() => handleSuccess(currentItem), 500);
+                            } else {
+                                // Wrong
+                                resultDisplay.classList.add('animate-shake');
+                                setTimeout(() => {
+                                    handleFail(currentItem);
+                                }, 800);
+                            }
+                        }
+                    };
+                    bank.appendChild(tile);
+                });
+                
+                // Add "Reset" button for spelling
+                const resetBtn = document.createElement('button');
+                resetBtn.innerText = "🔄 Reset";
+                resetBtn.className = "text-sm text-gray-500 underline mt-4";
+                resetBtn.onclick = () => {
+                    if(!isProcessing) loadQuestion(); // Reloads current question effectively resetting
+                };
+
+                elInteraction.appendChild(bank);
+                elInteraction.appendChild(resetBtn);
+            }
+        }
+
+        function getDistractors(correctItem, field) {
+            // Get 3 random items from DIFFERENT words
+            const others = vocabData.filter(i => i.id !== correctItem.id);
+            const shuffledOthers = shuffle(others).slice(0, 3);
+            return shuffledOthers.map(i => i[field]);
+        }
+
+        function handleChoice(btn, isCorrect, item) {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                speak(item.w);
+                setTimeout(() => handleSuccess(item), 800);
+            } else {
+                btn.classList.add('wrong');
+                handleFail(item);
+            }
+        }
+
+        function handleSuccess(item) {
+            score += 10;
+            currentIndex++;
+            loadQuestion();
+        }
+
+        function handleFail(item) {
+            lives--;
+            if (!mistakes.find(m => m.id === item.id)) {
+                mistakes.push(item);
+            }
+            
+            // Show correct answer briefly or move on if lives 0
+            if (lives <= 0) {
+                endGame();
+            } else {
+                // Flash correct answer logic could go here, but for flow we just move next or reset
+                setTimeout(() => {
+                    currentIndex++; // Skip to next to prevent getting stuck
+                    loadQuestion();
+                }, 1000);
+            }
+        }
+
+        function endGame() {
+            switchScreen('result');
+            document.getElementById('result-title').innerText = lives > 0 ? "大獲全勝！" : "再接再厲！";
+            document.getElementById('result-msg').innerText = `你的得分: ${score}`;
+            document.getElementById('result-icon').innerText = lives > 0 ? "🏆" : "⚓";
+
+            elMistakeList.innerHTML = '';
+            if (mistakes.length === 0) {
+                elMistakeList.innerHTML = '<li class="text-center text-green-600 font-bold text-lg">全對！你是單字大師！🎉</li>';
+            } else {
+                mistakes.forEach(m => {
+                    const li = document.createElement('li');
+                    li.className = "bg-red-50 p-2 rounded border border-red-100 flex justify-between items-center";
+                    li.innerHTML = `<span><strong>${m.w}</strong>: ${m.def}</span>`;
+                    elMistakeList.appendChild(li);
+                });
+            }
+        }
+
+        // --- UTILS ---
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+    </script>
+</body>
+</html>
