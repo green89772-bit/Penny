@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Detective Game</title>
+    
+    <!-- 引入 React 和 ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- 引入 Babel 用於解析 JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- 引入 Tailwind CSS 用於樣式 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- 自定義動畫樣式 -->
+    <style>
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        .animate-shake {
+            animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        /* 避免載入時閃爍 */
+        body { opacity: 0; animation: fadeIn 0.5s forwards; }
+        @keyframes fadeIn { to { opacity: 1; } }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- 圖示組件 (Inline SVGs to replace Lucide dependency) ---
+        const IconBase = ({ children, className, size = 24, color = "currentColor" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {children}
+            </svg>
+        );
+
+        const Trophy = (props) => <IconBase {...props}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></IconBase>;
+        const Star = (props) => <IconBase {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></IconBase>;
+        const ArrowRight = (props) => <IconBase {...props}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></IconBase>;
+        const RefreshCcw = (props) => <IconBase {...props}><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></IconBase>;
+        const Tent = (props) => <IconBase {...props}><path d="M19 20 10 4"/><path d="m5 20 9-16"/><path d="M3 20h18"/><path d="M12 15h6"/></IconBase>;
+        const Flame = (props) => <IconBase {...props}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.1.243-2.143.5-3.5a6 6 0 1 0 3 3.5Z"/></IconBase>;
+        const Compass = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></IconBase>;
+        const Hammer = (props) => <IconBase {...props}><path d="m15 12-8.5 8.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L12 9"/><path d="M17.64 15 22 10.64"/><path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25V2.46V2a2 2 0 0 0-2-2H12a2 2 0 0 0-2 2v2.5"/><path d="M15 6h6"/></IconBase>;
+        const Hexagon = (props) => <IconBase {...props}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></IconBase>;
+        const CheckCircle = (props) => <IconBase {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></IconBase>;
+        const XCircle = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></IconBase>;
+
+        // --- 遊戲資料 ---
+        const questions = [
+          {
+            id: 1,
+            type: "vocab",
+            question: "We use this to find direction (North, South). What is it?",
+            icon: <Compass size={64} className="text-blue-500" />,
+            options: ["Blanket", "Compass", "Stream", "Clay"],
+            answer: "Compass",
+            explanation: "Correct! A compass helps us find our way so we don't get lost."
+          },
+          {
+            id: 2,
+            type: "fill-in",
+            question: "It was cold at night, so I needed a warm ______ to sleep.",
+            icon: <Tent size={64} className="text-green-500" />,
+            options: ["Matches", "Bridge", "Blanket", "Triangle"],
+            answer: "Blanket",
+            explanation: "Good job! A blanket keeps you warm when you sleep."
+          },
+          {
+            id: 3,
+            type: "logic",
+            question: "My dad used MATCHES. What did he want to start?",
+            icon: <Flame size={64} className="text-orange-500" />,
+            options: ["A Fire", "A Stream", "A Plan", "A Partner"],
+            answer: "A Fire",
+            explanation: "Yes! Matches are used to start a fire for cooking or warmth."
+          },
+          {
+            id: 4,
+            type: "vocab",
+            question: "Which word means 'To join two things together'?",
+            icon: <Hammer size={64} className="text-purple-500" />,
+            options: ["Get lost", "Connect", "Experiment", "Camp"],
+            answer: "Connect",
+            explanation: "Bingo! When you build, you connect pieces together."
+          },
+          {
+            id: 5,
+            type: "science",
+            question: "Why is the TRIANGLE shape good for a bridge?",
+            icon: <Hexagon size={64} className="text-red-500" />, 
+            options: ["It is soft", "It is colorful", "It has strength", "It tastes good"],
+            answer: "It has strength",
+            explanation: "Smart! Triangles are very strong shapes for building."
+          }
+        ];
+
+        // --- 主程式 ---
+        function WordDetectiveGame() {
+          const [gameState, setGameState] = useState('start'); // start, playing, feedback, finished
+          const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+          const [score, setScore] = useState(0);
+          const [selectedOption, setSelectedOption] = useState(null);
+          const [isCorrect, setIsCorrect] = useState(false);
+          const [shake, setShake] = useState(false);
+
+          const currentQ = questions[currentQuestionIndex];
+
+          const handleStart = () => {
+            setGameState('playing');
+            setScore(0);
+            setCurrentQuestionIndex(0);
+          };
+
+          const handleAnswer = (option) => {
+            setSelectedOption(option);
+            const correct = option === currentQ.answer;
+            setIsCorrect(correct);
+
+            if (correct) {
+              setScore(score + 20); 
+            } else {
+              setShake(true);
+              setTimeout(() => setShake(false), 500);
+            }
+            
+            setGameState('feedback');
+          };
+
+          const handleNext = () => {
+            if (currentQuestionIndex < questions.length - 1) {
+              setCurrentQuestionIndex(currentQuestionIndex + 1);
+              setGameState('playing');
+              setSelectedOption(null);
+            } else {
+              setGameState('finished');
+            }
+          };
+
+          // 開始畫面
+          if (gameState === 'start') {
+            return (
+              <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-blue-100 to-green-100 p-4 font-sans">
+                <div className="bg-white p-8 rounded-3xl shadow-xl text-center max-w-md w-full border-b-8 border-blue-500">
+                  <div className="mb-6 flex justify-center">
+                    <div className="bg-yellow-100 p-4 rounded-full">
+                      <Trophy size={64} className="text-yellow-500" />
+                    </div>
+                  </div>
+                  <h1 className="text-4xl font-extrabold text-blue-600 mb-2">Word Detective</h1>
+                  <p className="text-gray-500 text-lg mb-8">Ready to solve the puzzles?</p>
+                  
+                  <button 
+                    onClick={handleStart}
+                    className="w-full bg-green-500 hover:bg-green-600 text-white text-2xl font-bold py-4 rounded-2xl shadow-lg transform transition active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    Play Now <ArrowRight />
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          // 結算畫面
+          if (gameState === 'finished') {
+            return (
+              <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-yellow-100 to-orange-100 p-4 font-sans">
+                <div className="bg-white p-8 rounded-3xl shadow-xl text-center max-w-md w-full border-b-8 border-orange-500">
+                  <h2 className="text-3xl font-bold text-gray-800 mb-4">Mission Complete!</h2>
+                  
+                  <div className="flex justify-center mb-6">
+                    <div className="relative">
+                      <Star size={100} className="text-yellow-400 fill-current animate-bounce" />
+                    </div>
+                  </div>
+
+                  <p className="text-gray-600 text-xl mb-2">Your Score</p>
+                  <div className="text-6xl font-black text-orange-500 mb-8">{score} / 100</div>
+
+                  <p className="text-gray-500 mb-8">
+                    {score === 100 ? "Perfect Score! You are a Word Master!" : "Great job! Keep practicing!"}
+                  </p>
+
+                  <button 
+                    onClick={handleStart}
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold py-3 rounded-xl shadow-md flex items-center justify-center gap-2"
+                  >
+                    <RefreshCcw /> Play Again
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          // 遊戲中畫面
+          return (
+            <div className="flex flex-col items-center min-h-screen bg-slate-50 p-4 font-sans">
+              <div className="w-full max-w-md mb-6 flex justify-between items-center bg-white p-3 rounded-xl shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Star className="text-yellow-500 fill-current" /> 
+                  <span className="font-bold text-xl text-gray-700">{score}</span>
+                </div>
+                <div className="text-gray-400 font-bold">
+                  Q {currentQuestionIndex + 1} / {questions.length}
+                </div>
+              </div>
+
+              <div className={`bg-white p-6 rounded-3xl shadow-lg max-w-md w-full border-b-8 border-gray-200 transition-all ${shake ? 'animate-shake ring-4 ring-red-300' : ''}`}>
+                <div className="flex flex-col items-center mb-6">
+                  <div className="bg-blue-50 p-4 rounded-full mb-4">
+                    {currentQ.icon}
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-800 text-center leading-tight">
+                    {currentQ.question}
+                  </h3>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3">
+                  {currentQ.options.map((option, idx) => {
+                    let btnStyle = "bg-white border-2 border-gray-200 text-gray-700 hover:border-blue-400 hover:bg-blue-50";
+                    
+                    if (gameState === 'feedback') {
+                      if (option === currentQ.answer) {
+                        btnStyle = "bg-green-100 border-2 border-green-500 text-green-700 font-bold";
+                      } else if (option === selectedOption && option !== currentQ.answer) {
+                        btnStyle = "bg-red-100 border-2 border-red-500 text-red-700 opacity-60";
+                      } else {
+                        btnStyle = "bg-gray-50 border-gray-100 text-gray-300";
+                      }
+                    }
+
+                    return (
+                      <button
+                        key={idx}
+                        disabled={gameState === 'feedback'}
+                        onClick={() => handleAnswer(option)}
+                        className={`w-full py-4 px-6 rounded-xl text-lg font-semibold transition-all duration-200 transform ${gameState !== 'feedback' && 'active:scale-95'} ${btnStyle}`}
+                      >
+                        {option}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {gameState === 'feedback' && (
+                <div className={`fixed bottom-0 left-0 right-0 p-6 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] animation-slide-up ${isCorrect ? 'bg-green-100' : 'bg-red-50'}`}>
+                  <div className="max-w-md mx-auto">
+                    <div className="flex items-center gap-3 mb-2">
+                      {isCorrect ? (
+                        <CheckCircle className="text-green-600" size={32} />
+                      ) : (
+                        <XCircle className="text-red-500" size={32} />
+                      )}
+                      <h3 className={`text-2xl font-black ${isCorrect ? 'text-green-700' : 'text-red-600'}`}>
+                        {isCorrect ? "Awesome!" : "Oops!"}
+                      </h3>
+                    </div>
+                    
+                    <p className="text-gray-700 text-lg mb-6 leading-relaxed font-medium">
+                      {currentQ.explanation}
+                    </p>
+
+                    <button 
+                      onClick={handleNext}
+                      className={`w-full py-4 rounded-xl text-xl font-bold text-white shadow-md transition active:scale-95 ${isCorrect ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}
+                    >
+                      {currentQuestionIndex < questions.length - 1 ? "Next Question" : "See Score"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<WordDetectiveGame />);
+    </script>
+</body>
+</html>
