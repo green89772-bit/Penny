@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Ultimate Jeans Battle - Judge Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Anton&family=Black+Ops+One&family=Montserrat:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #000000;
+            color: #fff;
+            overflow: hidden;
+            user-select: none;
+            cursor: pointer;
+        }
+
+        /* --- Theme Colors --- */
+        .text-gold { color: #FFD700; }
+        .bg-gold { background-color: #FFD700; }
+        .border-gold { border-color: #FFD700; }
+        .text-neon-red { color: #FF3333; text-shadow: 0 0 10px #FF0000; }
+        .text-neon-blue { color: #00FFFF; text-shadow: 0 0 10px #0000FF; }
+        .bg-neon-red { background-color: #FF3333; box-shadow: 0 0 20px #FF0000; }
+        .bg-neon-blue { background-color: #00FFFF; box-shadow: 0 0 20px #0000FF; }
+
+        /* --- Layout & Typography --- */
+        .slide {
+            display: none;
+            height: 100vh;
+            width: 100vw;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: #000;
+        }
+
+        .slide.active {
+            display: flex;
+        }
+
+        .font-huge {
+            font-family: 'Anton', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+
+        .font-digital {
+            font-family: 'Black Ops One', cursive;
+        }
+
+        /* --- Specific Slide Styles --- */
+        
+        /* Slide 1: Opening */
+        .bg-denim {
+            background: radial-gradient(circle, #1a1a1a 0%, #000000 90%);
+            background-size: 4px 4px;
+            background-image: repeating-linear-gradient(45deg, #111 0, #111 1px, transparent 0, transparent 50%);
+        }
+        
+        .vs-text {
+            font-size: 8rem;
+            color: #fff;
+            text-shadow: 0 0 20px #fff, 0 0 40px #FFD700;
+            animation: pulse 0.8s infinite alternate;
+        }
+
+        /* Slide 2: Data Scan */
+        .timer-container {
+            width: 80%;
+            height: 20px;
+            background: #333;
+            margin-top: 2rem;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        .timer-bar {
+            width: 100%;
+            height: 100%;
+            background: #FF0000;
+            transform-origin: left;
+        }
+
+        .option-box {
+            font-size: 3rem;
+            color: #666;
+            margin: 1rem 0;
+            transition: all 0.3s;
+        }
+        .option-box.active {
+            color: #FFD700;
+            transform: scale(1.2);
+            text-shadow: 0 0 30px #FFD700;
+        }
+        .option-box.dim {
+            opacity: 0.2;
+        }
+
+        /* Slide 3: Problem/Solution */
+        .arrow-right {
+            font-size: 5rem;
+            color: #333;
+        }
+        .arrow-right.active {
+            color: #FFD700;
+            text-shadow: 0 0 20px #FFD700;
+        }
+        .stamp-text {
+            position: absolute;
+            font-size: 4rem;
+            font-weight: 900;
+            border: 8px solid;
+            padding: 0.5rem 1rem;
+            transform: rotate(-15deg) scale(2);
+            opacity: 0;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .stamp-text.show {
+            transform: rotate(-15deg) scale(1);
+            opacity: 1;
+        }
+
+        /* Slide 4: QC Test */
+        .qc-split {
+            width: 100%;
+            height: 100%;
+            display: flex;
+        }
+        .qc-half {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #333;
+            position: relative;
+        }
+        .result-icon {
+            font-size: 15rem;
+            position: absolute;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        .result-icon.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Slide 5: Final Q */
+        .bg-thread {
+            background: repeating-linear-gradient(
+                45deg,
+                #331a00,
+                #331a00 10px,
+                #663300 10px,
+                #663300 20px
+            );
+        }
+        .answer-reveal {
+            opacity: 0;
+            transform: perspective(500px) rotateX(90deg);
+            transition: all 0.8s ease-out;
+            color: #b87333; /* Copper */
+            text-shadow: 0 0 10px #ffcc00;
+        }
+        .answer-reveal.show {
+            opacity: 1;
+            transform: perspective(500px) rotateX(0deg);
+        }
+
+        /* Slide 6: Winner */
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #FFD700;
+            top: 0;
+            opacity: 0;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            from { transform: scale(1); opacity: 0.8; }
+            to { transform: scale(1.1); opacity: 1; }
+        }
+        @keyframes slideInLeft {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes wipe {
+            from { transform: scaleX(1); }
+            to { transform: scaleX(0); }
+        }
+        
+        .fly-in-left { animation: slideInLeft 1s ease-out forwards; }
+        .fly-in-right { animation: slideInRight 1s ease-out forwards; }
+        .timer-anim { animation: wipe 10s linear forwards; }
+
+        .progress-indicator {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-family: 'Black Ops One', cursive;
+            color: #333;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Slide 1: Opening -->
+    <div class="slide bg-denim active" id="slide1">
+        <h1 class="text-7xl md:text-9xl font-huge text-white mb-10 tracking-widest">JEANS:<br>THE BATTLE</h1>
+        <div class="flex w-full justify-between items-end px-10 absolute bottom-20">
+            <h2 class="text-5xl md:text-7xl font-huge text-neon-red fly-in-left">TEAM<br>LEVI</h2>
+            <div class="vs-text absolute left-1/2 bottom-10 transform -translate-x-1/2">VS</div>
+            <h2 class="text-5xl md:text-7xl font-huge text-neon-blue fly-in-right">TEAM<br>JACOB</h2>
+        </div>
+        <p class="absolute bottom-5 text-gray-500 text-sm">CLICK TO START</p>
+    </div>
+
+    <!-- Slide 2: Round 1 Data Scan -->
+    <div class="slide bg-black" id="slide2">
+        <div class="absolute top-10 w-full text-center border-b border-gray-800 pb-4">
+            <h3 class="text-3xl text-gray-500 font-digital">ROUND 1: DATA SCAN</h3>
+        </div>
+        
+        <h2 class="text-6xl md:text-8xl font-huge mt-20 mb-10">HOW MANY PAIRS?</h2>
+        
+        <div class="flex flex-col gap-8 w-full max-w-4xl">
+            <div class="option-box font-digital" id="s2-opt-a">A: 3 PAIRS</div>
+            <div class="option-box font-digital" id="s2-opt-b">B: 7 PAIRS</div>
+        </div>
+
+        <div class="absolute bottom-20 right-20 text-right">
+            <div class="text-4xl font-digital text-red-500 mb-2">10 SECONDS</div>
+            <div class="w-64 h-4 bg-gray-800">
+                <div class="h-full bg-red-600" id="s2-timer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3: Problem & Solution -->
+    <div class="slide bg-black" id="slide3">
+        <div class="flex w-full h-full items-center justify-center gap-10">
+            <!-- Left: Problem -->
+            <div class="flex-1 flex flex-col items-center opacity-50 relative p-10 border border-gray-800 h-3/4 justify-center">
+                <h3 class="text-4xl text-red-500 font-bold mb-8">⚠️ PROBLEM</h3>
+                <i class="fas fa-tshirt text-9xl text-gray-600 mb-4"></i>
+                <div class="stamp-text text-red-600 border-red-600" id="s3-stamp-ripped">RIPPED</div>
+            </div>
+
+            <i class="fas fa-long-arrow-alt-right arrow-right" id="s3-arrow"></i>
+
+            <!-- Right: Solution -->
+            <div class="flex-1 flex flex-col items-center relative p-10 border border-gray-800 h-3/4 justify-center">
+                <h3 class="text-4xl text-green-500 font-bold mb-8">✅ SOLUTION</h3>
+                <i class="fas fa-circle text-9xl text-gray-600 mb-4" id="s3-icon-rivet"></i>
+                <div class="stamp-text text-gold border-gold" style="border:none; text-shadow: 0 0 20px #FFD700;" id="s3-stamp-rivets">RIVETS</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: QC Test -->
+    <div class="slide bg-black p-0" id="slide4">
+        <div class="absolute top-0 w-full bg-gray-900 py-4 z-10 border-b-2 border-gold">
+            <h2 class="text-6xl font-huge text-gold">QC TEST</h2>
+        </div>
+        <div class="qc-split mt-20">
+            <!-- Glue -->
+            <div class="qc-half border-r border-gray-700">
+                <h3 class="text-6xl text-gray-400 font-bold mb-10">GLUE</h3>
+                <div class="result-icon text-red-600" id="s4-fail">
+                    <i class="fas fa-times-circle"></i>
+                    <div class="text-4xl font-black mt-4">FAIL</div>
+                </div>
+            </div>
+            <!-- Rivet -->
+            <div class="qc-half">
+                <h3 class="text-6xl text-gray-400 font-bold mb-10">RIVET</h3>
+                <div class="result-icon text-green-500" id="s4-pass">
+                    <i class="fas fa-check-circle"></i>
+                    <div class="text-4xl font-black mt-4">PASS</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: Final Question -->
+    <div class="slide bg-thread" id="slide5">
+        <div class="absolute inset-0 bg-black bg-opacity-80"></div>
+        <div class="relative z-10 w-full max-w-5xl">
+            <h3 class="text-4xl text-orange-500 font-digital mb-10 tracking-widest">FINAL QUESTION</h3>
+            <h2 class="text-7xl font-huge text-white mb-20">WHY ORANGE?</h2>
+            
+            <div class="bg-black bg-opacity-60 p-10 border-2 border-orange-800 rounded-xl min-h-[200px] flex items-center justify-center">
+                <div class="answer-reveal text-6xl font-black" id="s5-answer">
+                    To match the<br>COPPER RIVETS
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 6: Winner -->
+    <div class="slide bg-black" id="slide6">
+        <h1 class="text-8xl md:text-[10rem] font-huge text-gold mb-10 animate-pulse">WINNER</h1>
+        
+        <div class="text-5xl md:text-7xl font-bold text-white mb-20 p-4 border-b-4 border-gold">
+            <span id="winner-placeholder">[ TEAM NAME ]</span>
+        </div>
+
+        <div class="mt-auto">
+            <p class="text-2xl text-gray-500 mb-4">TODAY'S PASSWORD</p>
+            <h2 class="text-9xl font-huge text-white text-neon-blue">RIVETS</h2>
+        </div>
+        <div id="confetti-container"></div>
+    </div>
+
+    <div class="progress-indicator" id="progress">1 / 6</div>
+
+    <script>
+        // --- Audio System (Web Audio API) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playTone(freq, type, duration) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playDing() {
+            // High pitched sine wave for "Ding"
+            playTone(880, 'sine', 0.1);
+            setTimeout(() => playTone(1760, 'sine', 0.4), 50);
+        }
+
+        function playBuzz() {
+            // Low saw wave for "Buzz"
+            playTone(150, 'sawtooth', 0.4);
+        }
+
+        function playTick() {
+            playTone(800, 'square', 0.05);
+        }
+
+        // --- Slide Logic ---
+        let currentSlide = 1;
+        const totalSlides = 6;
+        let state = {
+            s2_timer: false,
+            s2_reveal: false,
+            s3_step: 0, // 0: init, 1: ripped, 2: rivet
+            s4_step: 0, // 0: init, 1: glue fail, 2: rivet pass
+            s5_reveal: false
+        };
+
+        // Confetti Logic
+        function createConfetti() {
+            const container = document.getElementById('confetti-container');
+            const colors = ['#FFD700', '#FF3333', '#00FFFF', '#FFFFFF'];
+            for(let i=0; i<50; i++) {
+                const conf = document.createElement('div');
+                conf.className = 'confetti-piece';
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.animation = `wipe 1s linear infinite`; // Reuse wipe for simplicity or create falling
+                // Simple falling animation via JS for reliability
+                animateConfetti(conf);
+                container.appendChild(conf);
+            }
+        }
+
+        function animateConfetti(el) {
+            let top = 0;
+            let speed = Math.random() * 5 + 2;
+            let angle = Math.random() * 360;
+            let spin = Math.random() * 10 - 5;
+            
+            function frame() {
+                top += speed;
+                angle += spin;
+                el.style.top = top + 'px';
+                el.style.transform = `rotate(${angle}deg)`;
+                el.style.opacity = 1 - (top / window.innerHeight);
+                
+                if(top < window.innerHeight) {
+                    requestAnimationFrame(frame);
+                } else {
+                    el.remove();
+                }
+            }
+            frame();
+        }
+
+        document.body.onclick = nextStep;
+        document.addEventListener('keydown', (e) => {
+            if(e.code === 'Space' || e.code === 'ArrowRight') nextStep();
+        });
+
+        function updateProgress() {
+            document.getElementById('progress').innerText = `${currentSlide} / ${totalSlides}`;
+        }
+
+        function nextStep() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            // Slide 2 Logic: Timer -> Reveal
+            if(currentSlide === 2) {
+                if(!state.s2_timer) {
+                    document.getElementById('s2-timer').classList.add('timer-anim');
+                    state.s2_timer = true;
+                    playTick();
+                    return;
+                }
+                if(!state.s2_reveal) {
+                    document.getElementById('s2-opt-a').classList.add('dim');
+                    document.getElementById('s2-opt-b').classList.add('active');
+                    state.s2_reveal = true;
+                    playDing();
+                    return;
+                }
+            }
+
+            // Slide 3 Logic: Ripped -> Rivet
+            if(currentSlide === 3) {
+                if(state.s3_step === 0) {
+                    document.getElementById('s3-stamp-ripped').classList.add('show');
+                    state.s3_step = 1;
+                    playBuzz();
+                    return;
+                }
+                if(state.s3_step === 1) {
+                    document.getElementById('s3-arrow').classList.add('active');
+                    document.getElementById('s3-icon-rivet').classList.add('text-gold');
+                    document.getElementById('s3-stamp-rivets').classList.add('show');
+                    state.s3_step = 2;
+                    playDing();
+                    return;
+                }
+            }
+
+            // Slide 4 Logic: Fail -> Pass
+            if(currentSlide === 4) {
+                if(state.s4_step === 0) {
+                    document.getElementById('s4-fail').classList.add('show');
+                    state.s4_step = 1;
+                    playBuzz();
+                    return;
+                }
+                if(state.s4_step === 1) {
+                    document.getElementById('s4-pass').classList.add('show');
+                    state.s4_step = 2;
+                    playDing();
+                    return;
+                }
+            }
+
+            // Slide 5 Logic: Reveal
+            if(currentSlide === 5) {
+                if(!state.s5_reveal) {
+                    document.getElementById('s5-answer').classList.add('show');
+                    state.s5_reveal = true;
+                    playDing();
+                    return;
+                }
+            }
+
+            // Slide Navigation
+            if(currentSlide < totalSlides) {
+                document.getElementById(`slide${currentSlide}`).classList.remove('active');
+                currentSlide++;
+                document.getElementById(`slide${currentSlide}`).classList.add('active');
+                updateProgress();
+                
+                // Trigger Confetti on Slide 6
+                if(currentSlide === 6) {
+                    playDing();
+                    setInterval(createConfetti, 500);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
