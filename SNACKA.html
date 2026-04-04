@@ -3,107 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Seasons AI - PIXEL ADVENTURE</title>
+    <title>Seasons AI - PIXEL PIZZA PARTY</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@700;900&display=swap');
-        
-        :root { --game-bg: #5c94fc; --ground: #92450c; }
-        body { background-color: #000; font-family: 'Noto Sans TC', sans-serif; color: #fff; overflow-x: hidden; touch-action: pan-y; }
+        :root { --game-bg: #5c94fc; --mario-red: #e76e55; }
+        body { background-color: #000; font-family: 'Noto Sans TC', sans-serif; color: #fff; overflow-x: hidden; touch-action: pan-y; -webkit-user-select: none; }
         .pixel-font { font-family: 'Press Start 2P', cursive; }
-        
-        .screen { display: none; min-height: 100vh; padding: 20px; animation: slideUp 0.3s steps(5); flex-direction: column; background: var(--game-bg); border: 8px solid #000; }
-        .screen.active { display: flex; }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        /* 像素邊框樣式 */
+        .screen { display: none; min-height: 100vh; padding: 20px; flex-direction: column; background: var(--game-bg); border: 8px solid #000; }
+        .screen.active { display: flex; animation: slideUp 0.2s steps(4); }
+        @keyframes slideUp { from { transform: translateY(20px); } to { transform: translateY(0); } }
         .pixel-border { border: 4px solid #000; box-shadow: 4px 0 #000, -4px 0 #000, 0 4px #000, 0 -4px #000; background: #fff; color: #000; }
-        .btn-pixel { position: relative; display: inline-block; padding: 15px; background: #e76e55; color: #fff; box-shadow: inset -4px -4px #8c2020; border: 4px solid #000; active:translate-y-1; }
+        .btn-pixel { position: relative; padding: 15px; background: #e76e55; color: #fff; box-shadow: inset -4px -4px #8c2020; border: 4px solid #000; active:translate-y-1; }
         .btn-green { background: #7ccb11; box-shadow: inset -4px -4px #3e7305; }
         .btn-blue { background: #3cbcfc; box-shadow: inset -4px -4px #0078b8; }
-
-        /* 馬力歐跳動動畫 */
-        #mario-sprite { transition: transform 0.1s ease-out; width: 64px; height: 64px; image-rendering: pixelated; }
-        .stage-box { background: rgba(0,0,0,0.3); border: 4px solid #000; }
-        
-        /* 卡拉OK */
-        .karaoke-word { display: inline-block; color: #fff; margin-right: 8px; margin-bottom: 10px; font-size: 1.1rem; transition: all 0.1s; }
+        .stage-box { background: rgba(0,0,0,0.3); border: 4px solid #000; padding: 15px; border-radius: 8px; }
+        .karaoke-word { display: inline-block; color: #fff; margin-right: 8px; margin-bottom: 8px; font-size: 1.2rem; transition: all 0.1s; }
         .karaoke-word.active { color: #f8d712; transform: scale(1.2); text-shadow: 2px 2px #000; }
-        
-        .tab-btn { font-size: 8px; padding: 8px; border: 2px solid #000; background: #ccc; color: #000; }
+        #mario-sprite { transition: transform 0.1s ease-out; width: 64px; image-rendering: pixelated; }
+        .tab-btn { font-size: 8px; padding: 8px; border: 2px solid #000; background: #ccc; }
         .tab-btn.active { background: #7ccb11; color: #fff; }
-        .locked { filter: grayscale(1); opacity: 0.5; }
+        .locked { filter: grayscale(1); opacity: 0.5; pointer-events: none; }
     </style>
 </head>
 <body>
 
     <audio id="snd-jump" src="https://assets.mixkit.co/active_storage/sfx/2092/2092-preview.mp3"></audio>
     <audio id="snd-coin" src="https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3"></audio>
-    <audio id="snd-win" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
 
     <div class="max-w-md mx-auto relative min-h-screen">
         
         <div id="screen-login" class="screen active justify-center text-center">
-            <div class="mb-10 animate-bounce">
-                <img src="https://upload.wikimedia.org/wikipedia/en/a/a9/MarioNSMBW.png" class="w-32 mx-auto" style="image-rendering: pixelated;">
-            </div>
-            <h1 class="pixel-font text-2xl text-white mb-4" style="text-shadow: 4px 4px #000;">SEASONS AI</h1>
-            <p class="pixel-font text-[8px] text-yellow-400 mb-12">PRESS START TO PRACTICE</p>
-            
+            <div class="mb-10"><img src="https://img.icons8.com/color/144/super-mario.png" class="w-24 mx-auto animate-bounce"></div>
+            <h1 class="pixel-font text-xl text-white mb-8" style="text-shadow: 4px 4px #000;">SEASONS WORLD</h1>
             <div class="pixel-border p-6 mx-4">
-                <label class="block pixel-font text-[10px] mb-4">CHOOSE HERO:</label>
-                <select id="heroSelect" class="w-full bg-black text-white p-3 border-4 border-double border-white mb-8 outline-none"></select>
-                <button onclick="app.login()" class="btn-pixel w-full pixel-font text-sm btn-green">START GAME</button>
+                <label class="block pixel-font text-[10px] mb-4">SELECT HERO:</label>
+                <select id="heroSelect" class="w-full bg-black text-white p-3 border-4 border-double border-white mb-8 outline-none text-center"></select>
+                <button onclick="app.login()" class="btn-pixel w-full pixel-font text-sm btn-green">START</button>
             </div>
         </div>
 
         <div id="screen-map" class="screen">
-            <div class="flex justify-between items-center mb-6 stage-box p-4 rounded-lg">
+            <div class="flex justify-between items-center mb-6 stage-box">
                 <div>
                     <h2 class="pixel-font text-[10px]" id="displayName">Player</h2>
-                    <p class="pixel-font text-[7px] text-yellow-300 mt-2" id="displayTopic">World 1-1</p>
+                    <p class="pixel-font text-[7px] text-yellow-300 mt-2">WORLD MISSION</p>
                 </div>
                 <div class="text-right">
                     <p class="pixel-font text-[8px]">PIZZA</p>
                     <p class="pixel-font text-xl text-yellow-400" id="pizzaCount">0</p>
                 </div>
             </div>
-            <div id="partListContainer" class="grid gap-6"></div>
+            <div id="partListContainer" class="grid gap-4"></div>
         </div>
 
         <div id="screen-audio" class="screen">
-            <button onclick="app.goBack()" class="pixel-font text-[8px] mb-4"> < BACK</button>
-            <div class="stage-box p-6 flex-1 flex flex-col items-center">
-                <h3 class="pixel-font text-[10px] text-blue-300 mb-8 underline">LISTEN TO TEACHER</h3>
-                <div id="karaokeBox" class="bg-black/50 p-6 rounded-lg leading-relaxed flex-1 w-full overflow-y-auto border-4 border-black"></div>
+            <button onclick="app.goBack()" class="pixel-font text-[8px] mb-4 text-white"> < BACK</button>
+            <div class="stage-box flex-1 flex flex-col">
+                <h3 class="pixel-font text-[10px] text-blue-300 mb-6 underline text-center">MIMIC TEACHER</h3>
+                <div id="karaokeBox" class="bg-black/50 p-6 rounded-lg flex-1 overflow-y-auto border-4 border-black"></div>
                 <button id="playBtn" onclick="app.playAudio()" class="btn-pixel w-full pixel-font text-sm btn-blue mt-6">LISTEN</button>
             </div>
         </div>
 
         <div id="screen-challenge" class="screen">
-            <button onclick="app.goBack()" class="pixel-font text-[8px] mb-4"> < BACK</button>
-            
+            <button onclick="app.goBack()" class="pixel-font text-[8px] mb-4 text-white"> < BACK</button>
             <div class="flex gap-1 mb-4">
                 <button onclick="app.setLevel(1)" id="lvl1-tab" class="tab-btn active flex-1 pixel-font">CLOZE</button>
                 <button onclick="app.setLevel(2)" id="lvl2-tab" class="tab-btn locked flex-1 pixel-font">INIT</button>
                 <button onclick="app.setLevel(3)" id="lvl3-tab" class="tab-btn locked flex-1 pixel-font">BLANK</button>
             </div>
-
-            <div class="stage-box p-6 flex-1 flex flex-col items-center relative">
-                <button id="manual-pass-btn" onclick="app.forceTeacherPass()" class="hidden absolute top-[-10px] right-2 bg-yellow-400 text-black pixel-font text-[8px] p-2 border-2 border-black z-20">🔑 PASS</button>
-                
-                <div id="challengeDisplay" class="bg-black/40 p-4 text-sm font-bold w-full mb-8 min-h-[100px] border-b-4 border-black"></div>
-                
-                <div class="flex-1 flex flex-col items-center justify-center w-full">
-                    <div id="mario-container" class="relative mb-10">
-                        <img id="mario-sprite" src="https://doc-08-0g-docs.googleusercontent.com/docs/securesc/6848737/mario.png" onerror="this.src='https://img.icons8.com/color/96/super-mario.png'">
-                        <div class="w-20 h-2 bg-black/20 rounded-full mt-2 mx-auto"></div>
-                    </div>
-                    <div id="transcript-box" class="pixel-font text-[7px] text-white/50 text-center px-4 leading-loose">READY TO RECORD...</div>
+            <div class="stage-box flex-1 flex flex-col items-center relative">
+                <button id="manual-pass-btn" onclick="app.forceTeacherPass()" class="hidden absolute top-[-10px] right-2 bg-yellow-400 text-black pixel-font text-[7px] p-2 border-2 border-black z-20">🔑 PASS</button>
+                <div id="challengeDisplay" class="bg-black/40 p-4 text-sm font-bold w-full mb-8 min-h-[100px] border-b-4 border-black text-slate-200 leading-relaxed"></div>
+                <div class="flex-1 flex flex-col items-center justify-center">
+                    <img id="mario-sprite" src="https://img.icons8.com/color/96/super-mario.png" class="mb-4">
+                    <div id="transcript-box" class="pixel-font text-[7px] text-white/50 text-center px-4 leading-loose">READY?</div>
                 </div>
-
                 <button id="recBtn" onclick="app.toggleRecording()" class="btn-pixel w-full pixel-font text-sm btn-green mt-6">RECORD</button>
             </div>
         </div>
@@ -111,60 +89,45 @@
         <div id="result-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/90 px-6">
             <div class="pixel-border p-8 w-full max-w-sm text-center">
                 <div id="starBox" class="flex justify-center gap-2 mb-6"></div>
-                <p class="pixel-font text-[10px] mb-2">COURSE CLEAR!</p>
-                <div class="pixel-font text-5xl text-yellow-500 mb-8" id="finalScore">0</div>
-                <p id="modal-desc" class="pixel-font text-[8px] leading-loose mb-8 text-black"></p>
+                <div class="pixel-font text-5xl text-yellow-500 mb-6" id="finalScore">0</div>
+                <p id="modal-desc" class="pixel-font text-[8px] leading-loose mb-8 text-black">COURSE CLEAR!</p>
                 <button onclick="document.getElementById('result-modal').classList.add('hidden')" class="btn-pixel w-full pixel-font text-sm btn-blue">CONTINUE</button>
             </div>
         </div>
-
     </div>
 
     <script>
         // ==========================================
-        // 🚨 填入您的 GAS URL
+        // 🚨 終極對齊：填入您的 GAS URL
         // ==========================================
-        const GAS_URL = "您的_GAS_URL_貼在這裡"; 
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwU7BC8Eexs58uE2go36RidZfJpuW32wJGupjnQwESW2CtRjNC7BtlBN3iaqWpdmf-J/exec"; 
 
         const DB = {
-            "Sophia": { topic: "空氣汙染", p: { 
-                1: { t: "Hello everyone! My name is Sophia. Have you ever looked up at the Taichung sky and noticed it looks gray and blurry? That is air pollution. It happens because there are too many factories and cars in our city. When I breathe this dirty air, it makes me feel very angry and sad for our Earth." }, 
-                2: { t: "During my Chinese New Year holiday, I went to an amusement park. Right next to the park, I saw a factory burning trash. The thick smoke smelled terrible and the air felt very heavy. It made me realize that our Earth is sick, and I knew I had to help." }, 
-                3: { t: "I decided to start a scientific mission. Every single day, I check the AQI—the Air Quality Index. I record the numbers and make a line graph to track the changes. If I do this every day, I can show everyone how our air changes over time. In one year, that is 184 times I am helping the air stay important!" }, 
-                4: { t: "My family also started Eco-Friendly Days. Now, instead of driving, we ride our bikes to the library and the sports center. It is tiring, but I love hearing my family’s laughter while we exercise. Every Saturday is our Family Sports Day. After we finish our workout, my brother and I make fresh fruit juice together. It is so delicious and healthy! I want our Earth to be healthy again. So, next time you go out, please ride a bike or walk more. Let’s help Taichung breathe together. Thank you!" } 
-            }},
-            "Linus": { topic: "流浪動物", p: { 
-                1: { t: "Hello everyone! My name is Linus. Today, I want to talk about our furry neighbors—the stray animals of Taichung. During my winter vacation, I rode my bike to a friend’s house, and I saw something on the street that changed my heart forever." }, 
-                2: { t: "On my way, I saw stray dogs and cats everywhere. They were so thin, weak, and lonely. I saw one dog searching for food in a very dirty trash can! At the local market, a small cat was trying to grab a fish from a stall because it was so hungry. These animals have to fight every day just to survive." }, 
-                3: { t: "Look at these animals; the life of a stray is very difficult. Many of them are dirty and smelly because they have no home. I even saw some dogs with missing legs or old scars from accidents. When the wind is cold at night, they have to huddle together just to stay warm. It breaks my heart to see them suffering like this." }, 
-                4: { t: "We must remember that these animals were once someone's beloved pets. They are not trash! They are living things with feelings. My mission is to tell everyone: Please, do not abandon your dogs or cats. If you want a pet, please choose to adopt a stray from a shelter instead of buying one. A great city like Taichung must be a kind city. Let’s make our home safe for all animals. If you see a stray, please be kind to them. Thank you for listening!" } 
-            }},
-            "Robben": { topic: "包裝與垃圾", p: { 
-                1: { t: "Hello everyone! My name is Robben. Today, I want to talk about a hidden problem in Taichung. During my winter vacation, I saw something scary: mountains of packaging from online shopping parcels. It made me realize that our planet is being buried in plastic and paper." }, 2: { t: "I also saw people throwing trash on the ground in our local parks. It made me feel very unhappy and worried. I didn't just walk away; I decided to take action. I picked up the litter and took it home to throw it away properly. We must stop littering because Taichung is our beautiful home!" }, 3: { t: "I asked my mom: Why do parcels have so much extra packaging? She told me it is to protect the things inside. But I told her, This creates too much trash! If we protect our new toys but destroy our Earth, that is a big mistake. We need to find a better way to shop." }, 4: { t: "I started a mission to count the packaging for every parcel we receive. I found so much plastic and tape that we didn't actually need! Now, my family has a new rule: we will stop buying so many parcels. By buying less, we create less waste for the city. It is a simple way for a kid like me to be a hero for the environment. Small actions, like picking up trash or ordering fewer parcels, can save our city from pollution. Let’s keep Taichung clean and beautiful together for our future. Thank you!" } 
-            }},
-            "Eason": { topic: "食物浪費", p: { 1: { t: "Hello everyone! My name is Eason. Have you ever thought about where your food goes after you throw it away? Today, I want to talk to you about a very big problem: food waste. During my summer vacation, I looked in my kitchen and saw many things we bought but never used. They were all expired!" }, 2: { t: "It reminded me of a story from when I was little. I didn't know what expired meant, so I accidentally ate some old yogurt. The next day, my stomach hurt so much! I had to stay in the bathroom all day and I felt terrible. That painful experience taught me a very important lesson." }, 3: { t: "Throwing away food is not just a waste of money; it is a huge waste of resources. Did you know that Taichung is producing more food waste than we can eat? Excessive packaging and food waste are destroying our environment and even polluting our air. It is time for a change in how we eat!" }, 4: { t: "We don’t need magic to save the world; we just need to change our daily habits. Small actions can create a huge impact if everyone does them. Please remember to finish your food every time you are eating. When we finish our meals, we have less waste and a much cleaner Earth. I have started a mission to make sure my plate is always empty after dinner. Taichung is our home, and this is my voice. Please join me in stopping food waste forever! Thank you!" } }},
-            "Elsa": { topic: "廢氣汙染", p: { 1: { t: "Hello everyone! My name is Elsa. Every morning on my way to school, I see a lot of cars on the street. These vehicles pump toxic smoke directly into our faces while we walk. Our lungs are suffering because of bad air quality. It is time to face this serious problem together." }, 2: { t: "During my winter vacation, I went to the store with my family. I saw many cars parked, but they did not turn off their engines! Thick, black smoke was coming out of the back while the drivers waited. The smell was very bad and it made me cough. I looked at the sky and it was dark and gray. I felt very scared for our Earth and our health." }, 3: { t: "One day, I checked the AQI—the Air Quality Index. The report said the air was very dangerous for children. This happens because of big factories and because people don't turn off their engines when they stop. If we all just turn off our cars when we park, the air would be much cleaner! You might think one person can't help, but my action worked!" }, 4: { t: "This experience taught me that small actions create a huge impact. Now, my family takes public transport like the bus and the MRT to reduce carbon emissions. We also ride our bikes to help the air stay fresh and clean. We don't need magic to save the world; we just need to change our daily habits. Taichung is our home, and this is my voice. Please join me! Thank you!" } }},
-            "Yunny": { topic: "友善動物", p: { 1: { t: "Hello everyone! My name is Yunny. It breaks my heart to see poor dogs and cats living on the street with no one to love them. They suffer from hunger, cold, and diseases every single day. We must be the voice for those who cannot speak for themselves!" }, 2: { t: "During my winter holiday, I went to my grandma’s house. I saw a tiny gray kitten hiding near a trash can. It was shaking because it was so cold and it looked very hungry. I realized there are many stray animals in Taiwan because some people give up on their pets when they get old or sick. This is a very sad and serious problem." }, 3: { t: "I wanted to take action! My family went to find a park for pets. Some parks have a No Pets sign, but we finally found a special park with a playground for animals. I saw that we need more places where animals are welcome. Next, my mom took me to a pet-friendly restaurant." }, 4: { t: "When I went inside, I saw many cute and happy dogs eating with their owners. They were so lively and full of joy! It made me feel very happy to see pets being loved properly. This experience taught me that there is still a lot of work to do to help our stray animals. Please remember to respect all lives and love your pets forever. If we all care just a little bit more, we can help every cat and dog find a warm home. Thank you!" } }},
-            "Winny": { topic: "減塑環保", p: { 1: { t: "Hello everyone! My name is Winny. Today, I want to share my mission to make Taichung a cleaner and healthier home. During my winter vacation, I went to the market with my mom. I saw so many people using small plastic bags for every little thing. The ground was dirty and it smelled very bad." }, 2: { t: "Now, I always bring one giant reusable bag! This small change stops the mess and keeps our markets clean and green. I also noticed something at restaurants. Many places use disposable plastic spoons and chopsticks. When plastic gets hot in soup, it creates bad chemicals." }, 3: { t: "These chemicals are invisible, but they make our bodies sick! To stay safe and protect the Earth, I always choose to use my own reusable utensils. It is healthier for me and much better for Taichung. Lastly, I learned about eco-friendly clothes made from recycled plastic. Sometimes, these clothes have a lot of static electricity. People find them uncomfortable to wear and throw them away." }, 4: { t: "That is a waste of energy! I have a better idea: we can use that recycled material to make chairs or furniture instead. We shouldn't throw away our hard work just because a shirt is a bit shocking! We don't need magic to save the world; we just need to make smarter choices every day. Let’s keep our city beautiful and our bodies healthy for a long time. Thank you!" } }},
-            "Ryan": { topic: "珍惜食物", p: { 1: { t: "Hello everyone! My name is Ryan. Have you ever thought about where your food waste goes after you throw it away? Today, I want to talk about a big problem in Taichung: food waste." }, 2: { t: "During Chinese New Year, I saw people eating many delicious meals. But after dinner, there was a lot of leftover food! Many people just throw it away. This is a waste of money and a waste of food. If we don't put leftovers in a big fridge, they start to smell very bad. It can smell like someone got sick! This creates a dirty environment for our beautiful city." }, 3: { t: "Did you know that Taichung produces more food waste than we can handle? This waste is destroying our Earth. But we can be Food Savers! Don't throw away your food. For example, if you have leftover curry, you can make Curry Egg Fried Rice the next day! It is delicious and it saves money. Also, remember to buy only the food you can eat." }, 4: { t: "We don’t need magic to save the world; we just need to change our daily habits. Small actions can create a huge impact. Please join me and finish your food every day! Let’s keep Taichung clean together. Thank you!" } }},
-            "Rebecca": { topic: "守護呼吸", p: { 1: { t: "Close your eyes and imagine a city where you must wear a mask just to go outside and play. Sadly, this nightmare is starting to happen here in Taichung. When I see thick smoke coming from factories and cars, I feel very angry. It feels like our city is sick. Air pollution is not a joke; it is destroying our air and our future." }, 2: { t: "I joined the Air Guardians to help. My mission is called The Green Traveler. I want to reduce carbon dioxide in the atmosphere. Many people leave their car engines running or smoke in public, and this makes the air very dirty. We need to face this serious problem now because our lungs are suffering every day." }, 3: { t: "During my Chinese New Year holiday, I decided to take action. I chose to ride my bike and walk instead of using a car. I recorded my data in a log for two weeks. I successfully rode my bike 4 times during the holiday! If I keep doing this, I can ride my bike over 30 times a year. This small habit makes a big difference for the planet." }, 4: { t: "We can all be Green Travelers together. Please, take the bus or the MRT whenever you can. If you must drive, remember to turn off your engine when you stop. These small actions help Taichung's air become clean and fresh again. We don’t need magic to save the world; we just need to change our habits. Taichung is our home. Be a hero for our future and our air! Thank you!" } }},
-            "Vincent": { topic: "流浪家園", p: { 1: { t: "Hello everyone! My name is Vincent. Imagine a perfect city where every stray animal has a warm bed and a full bowl of food. Sadly, our reality in Taichung is quite different. When I look around, I see sad dogs and trash on the streets. It makes me feel very sad because animals are not toys; they feel pain and they feel lonely just like us." }, 2: { t: "During Chinese New Year, I saw many dogs wandering on the street. I even saw some kind people gave them food because they didn't want them to starve. I learned that many dogs are abandoned by their owners when they become a burden. This is a very big problem. If you have a pet, please never give up on them." }, 3: { t: "I wanted to change this, so I actively checked for information. I found out that Taichung has two big animal shelters in Nantun and Houli. I went to see them and took photos of the animals. There are many stray dogs there waiting for a home. The people there work very hard to feed them and give them a warm place to stay." }, 4: { t: "I have started giving them food to help. By sharing this message, I hope to educate 100 people this year about this issue! We cannot look away anymore. We must learn how to treat stray animals with love and respect. A great city must be kind to everyone, including our animal friends. I urge you to join me and be kind to our furry neighbors. Thank you!" } }},
-            "Leo": { topic: "海洋守護者", p: { 1: { t: "Hello everyone! My name is Leo. Have you ever thought about where your plastic bags go after you throw them away? In Taichung, we have a huge problem. Our incinerators are overloaded because we use too much plastic every day. It is time for us to wake up and see the truth!" }, 2: { t: "During my winter vacation, I went hiking in the mountains. I saw something that made me very sad. In a pile of trash, I saw a stray dog named Da Huang. He only had three legs and was limping. He was searching for food in our garbage. It made me realize that our waste is destroying the homes of animals." }, 3: { t: "Plastic is not just trash; it pollutes our air and makes our planet hot. When the Earth gets too warm, the ice at the poles melts. This can release old viruses and make animals die out. Humans are being selfish, but we share this planet with everyone, including Da Huang. I decided to change my habits immediately." }, 4: { t: "I visited a zero-waste store in Taichung to see how they live. Now, I always use my own reusable cup when I buy drinks at the shop. One cup might seem small, but if we all do it, the city will be cleaner and the air will be fresh. We must protect this planet so we can all survive together. Please, stop using plastic bags and bring your own cup. Let’s save our home before it's too late! Thank you!" } }},
-            "William": { topic: "惜食英雄", p: { 1: { t: "Hello everyone! My name is William. Have you ever walked down the street and seen someone throw away their breakfast because they couldn't finish it? It makes me feel very sad. Today, I want to talk about why we must stop wasting food to save our city." }, 2: { t: "One day, I saw a person throw a lunch box directly on the road. I decided to help instead of just watching. I picked up the trash and took it home to sort it. The food inside was old and smelled terrible! It made me realize that our Earth is getting sick because of all this unnecessary waste." }, 3: { t: "When I see food waste and trash everywhere, I see a gray sky. It looks like the Earth has a fever and needs medicine. If we keep wasting food, the planet will get even sicker. We need to act now as a team!" }, 4: { t: "I have a mission: I always finish my food! Ever since I was a little boy, my plate is always clean after a meal. Sometimes, when my mom or dad cannot finish their dinner, I help them finish it! This is a simple way to help the Earth every single day of the year. Please, don't waste food. If we all finish our meals, the Earth will be healthy and happy again. You don't need to be a scientist to help; you just need to eat your dinner. Be a Clean Plate Hero with me today! Thank you!" } }},
-            "Cynthia": { topic: "天空守望者", p: { 1: { t: "Hello everyone! My name is Cynthia. I love Taichung, but I really hate the dirty air. It breaks my heart to see our beautiful city covered in black smoke. We are destroying our own environment just because it is convenient to drive cars everywhere. We need to wake up!" }, 2: { t: "Taichung is sick. Every day, factories and cars pump toxic smoke into the sky. This smoke destroys the protection around our Earth. If this layer is broken, the sun will shine too brightly and burn our planet. We cannot wait; we must act now to protect our home." }, 3: { t: "My mission taught me that real change starts with small habits. Now, I check the AQI every day to see if the air is healthy. I also use reusable bags and always finish my food to reduce waste. My family even watches videos to learn how to turn trash into treasure by recycling!" }, 4: { t: "When I grow up, I want to be an inventor. I want to build electric houses and clean cars that do not use gas. If we use clean energy, we can stop the smoke and let the Earth breathe again. We don’t need magic to save the world; we just need to stop polluting the air. If we change our daily habits, Taichung will become beautiful and healthy again. Please join me! Thank you!" } }},
-            "Fiona": { topic: "毛孩鄰居", p: { 1: { t: "Hello everyone! My name is Fiona. Today, I want to talk about a serious problem in our city: stray animals. In Taichung, many cats and dogs live on the street with no shelter. Life is very hard for them, especially when it is cold, rainy, and windy." }, 2: { t: "During my holiday, I saw a small cat near a restaurant. It was injured and looked very sad and scared. My family and I gave it some fish snacks to help it. I realized that many animals in Taichung need a warm home and someone to care for them." }, 3: { t: "Later, I saw a different cat at a hotel. This cat was very chubby! The staff told me that they feed it every day. This taught me something important: some strays have community friends who look after them. This is a beautiful way for neighbors to work together." }, 4: { t: "We can all help Taichung’s stray animals in small ways. We can give them clean water or take them to a vet if they are hurt. But the most important thing is to be responsible with our own pets. Every small act of kindness helps these animals feel less alone in the world. A great city is a city that is kind to animals. We should treat them with the same respect we show to people. Let’s look after our furry neighbors together and make Taichung a haven for all lives. Thank you for listening to my story!" } }},
-            "Zac": { topic: "河川衛兵", p: { 1: { t: "Hello everyone! My name is Zac. Today, I want to talk about a small thing that creates a big problem in Taichung: plastic bags. One day, on my way home from school, I saw a big pile of plastic bags near a drain. I decided to stop and count them." }, 2: { t: "I found so many bags in just one spot! It made me think: if every person in Taichung keeps using plastic bags every day, our Earth will soon be full of trash. We see them in our parks and on our streets. This is a problem we cannot ignore anymore." }, 3: { t: "I did a scientific calculation. If 30,000 people each use 50 plastic bags, that is 1.5 million bags! That is enough to make a whole river in Taichung completely polluted. When a river is filled with plastic, the water becomes dirty and the whole environment suffers. What happens to the fish in a polluted river?" }, 4: { t: "They will die because they cannot breathe or find food. Our rivers are a vital part of our home, and we must protect the animals that live there. If we don't change our behavior, there will be no more clean water for the future generations. So, I made a big decision. I will use my own reusable bag every time I go out to shop. It is easy to carry, and it stops pollution! Taichung is our home. Let’s stop using plastic bags and save our rivers together. Thank you for your time!" } }},
-            "Jeremy": { topic: "惜食戰士", p: { 1: { t: "Hello everyone! My name is Jeremy. Have you ever thought about where your food goes after you throw it away? During my Chinese New Year holiday, I noticed a big problem in Taichung. I saw so much food waste! Some people threw away food that was expired, and others just didn't finish their meals." }, 2: { t: "This made me feel very sad for our resources. Did you know that Taichung is producing more food waste than we can eat? When we waste food, it destroys our environment and even creates bad air for our beautiful city. We must stop this right now!" }, 3: { t: "My parents and I came up with a great idea to help. We made special flyers to teach people how to manage their food better. I even went to the security guards in my neighborhood and asked them to help me give the flyers to my neighbors! I wanted everyone to know that small actions can create a huge impact on the world." }, 4: { t: "I also started a personal mission. I decided to finish every single bite of my food, no matter what. I take a photo every time I finish my meal to show that I am keeping my promise as a warrior. We don’t need magic to save the world; we just need to change our daily habits. Taichung is our home, and this is my voice. Please join me and finish your food to keep our city clean! Thank you!" } }},
-            "Emma": { topic: "低碳騎士", p: { 1: { t: "Hello everyone! My name is Emma. Did you know that Taichung’s temperature is getting hotter every year? This is happening because of air pollution and global warming. Today, I want to speak up for our health and our home." }, 2: { t: "During my winter vacation, I realized we needed to start with our own family's pollution. Since we have a motorcycle, my father and I decided to check the health condition of our motorcycle. We found out that if the engine is not well maintained, it could be pumping out thick, black smoke into the air. This made me realize that even a single personal vehicle can be a big part of the problem." }, 3: { t: "If we don't care for our own motorcycles, we are making the air hard for children to breathe, and our lungs suffer very easily. We must take this problem seriously. One major problem is that people always drive gas cars. But we have a better way! We can ride eco-friendly bicycles. Riding a bike doesn't make any smoke, and it even saves money for your family! We can also take the bus, the MRT, or the train." }, 4: { t: "I learned that clean air is everyone’s responsibility, not just the government's. We must remind people: Turn off your engine when you are waiting! If we stop making trash and stop the black smoke from factories, our city will stay beautiful. Taichung is our home, and this is my voice. Let's help the air stay clean so we can all be healthy and happy. Thank you for listening to my speech!" } }},
-            "Dora": { topic: "領養大使", p: { 1: { t: "Hello everyone! My name is Dora. I have a question for you: What would you do if you were left alone in the rain without an umbrella? You would feel cold, scared, and very lonely. Sadly, that is the daily reality for thousands of stray animals in Taichung." }, 2: { t: "This winter, I saw a group of stray dogs and cats. They were very dirty and they smelled bad because they had no one to wash them. I felt so sorry for them because they were suffering in the cold. Later, they were taken to an animal shelter. I was happy because they finally had a warm home." }, 3: { t: "But then, a new group of dogs moved into the street. These dogs were not gentle; they were aggressive and scared everyone. People were afraid to go outside, and the busy street became empty and quiet. It showed me that when animals are scared and have no homes, they can become a danger to the city." }, 4: { t: "Thankfully, the animal shelter helped again. Now, the street is busy and happy once more. This experience taught me an important lesson. Animals cannot speak our language, so we must speak for them. We need to make sure every animal is safe so that our city is safe too. Please remember: Adopt, don't shop! Every animal deserves a home and a voice. Please join me to make Taichung a kinder place for everyone, both humans and animals. Thank you!" } }}
+            "Sophia": { topic: "空氣汙染", p: { 1: { t: "Hello everyone! My name is Sophia. Have you ever looked up at the Taichung sky and noticed it looks gray and blurry? That is air pollution." }, 2: { t: "During my Chinese New Year holiday, I went to an amusement park. Right next to the park, I saw a factory burning trash." }, 3: { t: "I decided to start a scientific mission. Every single day, I check the AQI—the Air Quality Index." }, 4: { t: "My family also started Eco-Friendly Days. Now, instead of driving, we ride our bikes." }}},
+            "Linus": { topic: "流浪動物", p: { 1: { t: "Hello everyone! My name is Linus. Today, I want to talk about our furry neighbors—the stray animals of Taichung." }, 2: { t: "On my way, I saw stray dogs and cats everywhere. They were so thin, weak, and lonely." }, 3: { t: "Look at these animals; the life of a stray is very difficult. Many of them are dirty and smelly." }, 4: { t: "We must remember that these animals were once someone's beloved pets. They are not trash!" }}},
+            "Robben": { topic: "包裝垃圾", p: { 1: { t: "Hello everyone! My name is Robben. Today, I want to talk about a hidden problem in Taichung. During my winter vacation, I saw mountains of packaging." }, 2: { t: "I also saw people throwing trash on the ground in our local parks. It made me feel very unhappy and worried." }, 3: { t: "I asked my mom: Why do parcels have so much extra packaging? She told me it is to protect things." }, 4: { t: "I started a mission to count the packaging for every parcel we receive. I found so much plastic!" }}},
+            "Eason": { topic: "食物浪費", p: { 1: { t: "Hello everyone! My name is Eason. Have you ever thought about where your food goes after you throw it away?" }, 2: { t: "It reminded me of a story from when I was little. I accidentally ate some old yogurt." }, 3: { t: "Throwing away food is not just a waste of money; it is a huge waste of resources." }, 4: { t: "Small actions can create a huge impact if everyone does them. Please finish your food!" }}},
+            "Elsa": { topic: "空氣廢氣", p: { 1: { t: "Hello everyone! My name is Elsa. Every morning on my way to school, I see a lot of cars on the street." }, 2: { t: "During my winter vacation, I saw many cars parked, but they did not turn off their engines!" }, 3: { t: "One day, I checked the AQI. The report said the air was very dangerous for children." }, 4: { t: "This experience taught me that small actions create a huge impact. Now we ride bikes!" }}},
+            "Yunny": { topic: "友善動物", p: { 1: { t: "Hello everyone! My name is Yunny. It breaks my heart to see poor dogs and cats living on the street." }, 2: { t: "During my winter holiday, I saw a tiny gray kitten hiding near a trash can. It was shaking." }, 3: { t: "I wanted to take action! My family went to find a park for pets. We found a special playground." }, 4: { t: "When I went inside, I saw many cute and happy dogs eating with their owners. Please respect lives." }}},
+            "Winny": { topic: "減塑環保", p: { 1: { t: "Hello everyone! My name is Winny. Today, I want to share my mission to make Taichung a healthier home." }, 2: { t: "Now, I always bring one giant reusable bag! This small change stops the mess." }, 3: { t: " disposable plastic spoons and chopsticks create bad chemicals. I use my own utensils." }, 4: { t: "I learned about eco-friendly clothes made from recycled plastic. Let's make smarter choices." }}},
+            "Ryan": { topic: "珍惜食物", p: { 1: { t: "Hello everyone! My name is Ryan. Have you ever thought about where your food waste goes?" }, 2: { t: "During Chinese New Year, I saw people eating many delicious meals. But there were leftovers!" }, 3: { t: "Did you know that Taichung produces more food waste than we can handle? Be a food saver!" }, 4: { t: "We don’t need magic to save the world; we just need to change our habits. Finish your food!" }}},
+            "Rebecca": { topic: "守護呼吸", p: { 1: { t: "Close your eyes and imagine a city where you must wear a mask just to go outside and play." }, 2: { t: "I joined the Air Guardians to help. My mission is called The Green Traveler." }, 3: { t: "During my Chinese New Year holiday, I successfully rode my bike 4 times. It makes a difference." }, 4: { t: "Please take the bus or the MRT whenever you can. These small actions help Taichung's air." }}},
+            "Vincent": { topic: "流浪家園", p: { 1: { t: "Hello everyone! My name is Vincent. Imagine a perfect city where every stray animal has a warm bed." }, 2: { t: "During Chinese New Year, I saw many dogs wandering on the street. Please never give up on them." }, 3: { t: "I found out that Taichung has two big animal shelters. There are many stray dogs waiting." }, 4: { t: "I have started giving them food to help. We must learn how to treat animals with respect." }}},
+            "Leo": { topic: "海洋守護者", p: { 1: { t: "Hello everyone! My name is Leo. Have you ever thought about where your plastic bags go?" }, 2: { t: "During my winter vacation, I saw a stray dog named Da Huang. He only had three legs." }, 3: { t: "Plastic pollutes our air and makes our planet hot. Humans are being selfish." }, 4: { t: "Now, I always use my own reusable cup when I buy drinks. One cup might seem small." }}},
+            "William": { topic: "惜食英雄", p: { 1: { t: "Hello everyone! My name is William. Have you ever walked down the street and seen wasted breakfast?" }, 2: { t: "One day, I saw a person throw a lunch box on the road. The food was old and smelled terrible!" }, 3: { t: "It looks like the Earth has a fever and needs medicine. We need to act now as a team!" }, 4: { t: "I always finish my food! Ever since I was a little boy, my plate is always clean." }}},
+            "Cynthia": { topic: "天空守望者", p: { 1: { t: "Hello everyone! My name is Cynthia. I love Taichung, but I really hate the dirty air." }, 2: { t: "Every day, factories and cars pump toxic smoke into the sky. We must act now." }, 3: { t: "Now, I check the AQI every day. My family even learns how to turn trash into treasure." }, 4: { t: "When I grow up, I want to be an inventor. I want to build electric houses and clean cars." }}},
+            "Fiona": { topic: "毛孩鄰居", p: { 1: { t: "Hello everyone! My name is Fiona. Today, I want to talk about stray animals in our city." }, 2: { t: "During my holiday, I saw a small cat near a restaurant. My family gave it some fish snacks." }, 3: { t: "Later, I saw a different cat at a hotel. This cat was very chubby! The staff feed it." }, 4: { t: "Every small act of kindness helps these animals feel less alone. Let's look after them." }}},
+            "Zac": { topic: "河川衛兵", p: { 1: { t: "Hello everyone! My name is Zac. Today, I want to talk about plastic bags. I counted them." }, 2: { t: "I found so many bags in just one spot! This is a problem we cannot ignore anymore." }, 3: { t: "If 30,000 people use 50 bags, that is 1.5 million bags! That makes a river polluted." }, 4: { t: "What happens to the fish? They will die. I will use my own reusable bag every time." }}},
+            "Jeremy": { topic: "惜食戰士", p: { 1: { t: "Hello everyone! My name is Jeremy. Have you ever thought about where your food waste goes?" }, 2: { t: "This made me feel very sad for our resources. We must stop this right now!" }, 3: { t: "We made special flyers to teach people. I even went to the security guards in my neighborhood." }, 4: { t: "I take a photo every time I finish my meal to show that I am keeping my promise." }}},
+            "Emma": { topic: "低碳騎士", p: { 1: { t: "Hello everyone! My name is Emma. Did you know that Taichung’s temperature is getting hotter?" }, 2: { t: "Since we have a motorcycle, my father and I decided to check the health of its engine." }, 3: { t: "We have a better way! We can ride eco-friendly bicycles. It even saves money!" }, 4: { t: "If we stop the black smoke from factories, our city will stay beautiful. Let's help the air." }}},
+            "Dora": { topic: "領養大使", p: { 1: { t: "Hello everyone! My name is Dora. What would you do if you were left alone in the rain?" }, 2: { t: "This winter, I saw stray dogs and cats. They were taken to an animal shelter. I was happy." }, 3: { t: "When animals are scared and have no homes, they can become a danger to the city." }, 4: { t: "Please remember: Adopt, don't shop! Every animal deserves a home and a voice." }}}
         };
 
         const app = {
             name: "", data: null, part: 1, level: 1, pizza: 0,
             partProg: { 1: 0, 2: 0, 3: 0, 4: 0 }, 
-            mediaRecorder: null, audioChunks: [], isRec: false, isPlaying: false, syncInterval: null,
-            recognition: null, finalTranscript: "",
-            micContext: null, micAnalyser: null,
+            isRec: false, isPlaying: false, finalTranscript: "",
+            recognition: null, audioCtx: null, analyser: null,
 
             init() {
                 const s = document.getElementById('heroSelect');
@@ -174,14 +137,13 @@
 
             saveData() {
                 if(!this.name) return;
-                localStorage.setItem(`seasons_final_${this.name}`, JSON.stringify({ pizza: this.pizza, partProg: this.partProg }));
+                localStorage.setItem(`seasons_mario_${this.name}`, JSON.stringify({ pizza: this.pizza, partProg: this.partProg }));
             },
             loadData(name) {
-                const saved = localStorage.getItem(`seasons_final_${name}`);
+                const saved = localStorage.getItem(`seasons_mario_${name}`);
                 if(saved) {
                     const d = JSON.parse(saved);
-                    this.pizza = d.pizza || 0;
-                    this.partProg = d.partProg || { 1: 0, 2: 0, 3: 0, 4: 0 };
+                    this.pizza = d.pizza || 0; this.partProg = d.partProg || { 1: 0, 2: 0, 3: 0, 4: 0 };
                 } else {
                     this.pizza = 0; this.partProg = { 1: 0, 2: 0, 3: 0, 4: 0 };
                 }
@@ -193,13 +155,10 @@
             login() {
                 const n = document.getElementById('heroSelect').value;
                 if(!n) return;
-                this.name = n; this.data = DB[n];
-                this.loadData(n);
+                this.name = n; this.data = DB[n]; this.loadData(n);
                 document.getElementById('displayName').innerText = n;
-                document.getElementById('displayTopic').innerText = this.data.topic;
                 document.getElementById('pizzaCount').innerText = this.pizza;
-                this.renderMap();
-                this.switch('screen-map');
+                this.renderMap(); this.switch('screen-map');
             },
 
             renderMap() {
@@ -209,16 +168,13 @@
                     const prog = this.partProg[pNum];
                     const chalLk = prog < 1 ? 'locked' : '';
                     c.innerHTML += `
-                    <div class="stage-box p-4 rounded-xl flex items-center gap-4 relative">
-                        <div class="pixel-font text-blue-400 text-sm">#${pNum}</div>
+                    <div class="stage-box flex items-center gap-4">
+                        <div class="pixel-font text-white text-[12px]">W${pNum}</div>
                         <div class="flex-1">
-                            <p class="pixel-font text-[8px] text-white">WORLD PART ${pNum}</p>
-                            <p class="text-[10px] text-slate-400">Prog: Lv.${prog}</p>
+                            <p class="pixel-font text-[7px] text-yellow-200">LV.${prog}</p>
                         </div>
-                        <div class="flex gap-2">
-                            <button onclick="app.goAudio(${pNum})" class="btn-pixel pixel-font text-[7px] btn-blue">DEMO</button>
-                            <button onclick="app.goChallenge(${pNum})" class="btn-pixel pixel-font text-[7px] btn-green ${chalLk}">START</button>
-                        </div>
+                        <button onclick="app.goAudio(${pNum})" class="btn-pixel pixel-font text-[7px] btn-blue">DEMO</button>
+                        <button onclick="app.goChallenge(${pNum})" class="btn-pixel pixel-font text-[7px] btn-green ${chalLk}">GO</button>
                     </div>`;
                 });
                 lucide.createIcons();
@@ -232,23 +188,17 @@
             },
 
             playAudio() {
-                if(this.isPlaying) return;
-                this.isPlaying = true;
+                if(this.isPlaying) return; this.isPlaying = true;
                 const btn = document.getElementById('playBtn'); btn.classList.add('opacity-50');
-                const txtObj = this.data.p[this.part];
-                const msg = new SpeechSynthesisUtterance(txtObj.t);
+                const msg = new SpeechSynthesisUtterance(this.data.p[this.part].t);
                 msg.lang = 'en-US'; msg.rate = 0.9;
                 const words = document.querySelectorAll('.karaoke-word');
-                const totalChars = txtObj.t.length;
-                const estTotalTimeMs = (totalChars * 55) / 0.9;
                 let curIdx = 0;
                 const animate = () => {
                     if (curIdx >= words.length || !this.isPlaying) return;
                     words.forEach(w => w.classList.remove('active'));
                     words[curIdx].classList.add('active');
-                    const wordLen = words[curIdx].innerText.length;
-                    const duration = (wordLen / totalChars) * estTotalTimeMs;
-                    curIdx++; setTimeout(animate, duration + 40); 
+                    curIdx++; setTimeout(animate, (words[curIdx-1].innerText.length / 20) * 1000 + 300);
                 };
                 msg.onstart = animate;
                 msg.onend = () => { 
@@ -260,9 +210,7 @@
             },
 
             goChallenge(p) {
-                if(this.partProg[p] < 1) return alert("Watch Demo first!");
-                this.part = p; 
-                const prog = this.partProg[p];
+                this.part = p; const prog = this.partProg[p];
                 document.getElementById('lvl1-tab').classList.remove('locked');
                 document.getElementById('lvl2-tab').classList.toggle('locked', prog < 2);
                 document.getElementById('lvl3-tab').classList.toggle('locked', prog < 3);
@@ -272,87 +220,56 @@
             },
 
             setLevel(lvl) {
-                if(document.getElementById(`lvl${lvl}-tab`).classList.contains('locked')) return;
                 this.level = lvl;
-                [1,2,3].forEach(l => {
-                    const b = document.getElementById(`lvl${l}-tab`);
-                    b.className = `tab-btn flex-1 pixel-font ${l===lvl ? 'active' : ''} ${b.classList.contains('locked')?'locked':''}`;
-                });
+                [1,2,3].forEach(l => document.getElementById(`lvl${l}-tab`).className = `tab-btn flex-1 pixel-font ${l===lvl ? 'active' : ''}`);
                 const txt = this.data.p[this.part].t;
                 const d = document.getElementById('challengeDisplay');
                 if(lvl===1) d.innerText = txt.split(" ").map((w,i)=>i%3===0?"____":w).join(" ");
                 else if(lvl===2) d.innerText = txt.split(". ").map(s=>s.split(" ")[0]+"...").join("\n");
-                else d.innerText = "WORLD BOSS: Recite from memory!";
+                else d.innerText = "BOSS LEVEL: SPEAK FROM MEMORY!";
             },
 
             async toggleRecording() {
-                const btn = document.getElementById('recBtn');
-                const orb = document.getElementById('energy-orb');
-                const tBox = document.getElementById('transcript-box');
-                
                 if(this.isRec) { this.stopRecording(); return; }
-
+                const btn = document.getElementById('recBtn');
                 this.isRec = true; this.finalTranscript = "";
-                btn.innerText = "STOP"; btn.classList.replace('btn-green', 'btn-pixel'); btn.style.background = "#ff0000";
-                orb.classList.add('recording');
-                tBox.innerText = "LISTENING...";
-                document.getElementById('manual-pass-btn').classList.remove('hidden');
+                btn.innerText = "STOP"; btn.style.background = "#ff0000";
                 document.getElementById('snd-jump').play();
+                document.getElementById('manual-pass-btn').classList.remove('hidden');
 
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                
-                // 馬力歐跳動邏輯
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const analyser = audioCtx.createAnalyser();
-                const source = audioCtx.createMediaStreamSource(stream);
-                source.connect(analyser);
-                const dataArray = new Uint8Array(analyser.frequencyBinCount);
-                
-                const updateMario = () => {
-                    if(!this.isRec) return;
-                    analyser.getByteFrequencyData(dataArray);
-                    let sum = 0; for(let i=0; i<dataArray.length; i++) sum += dataArray[i];
-                    let vol = sum / dataArray.length;
-                    document.getElementById('mario-sprite').style.transform = `translateY(-${Math.min(100, vol * 1.5)}px)`;
-                    requestAnimationFrame(updateMario);
-                };
-                updateMario();
-
-                // 語音辨識
                 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-                if (SR) {
-                    this.recognition = new SR(); this.recognition.lang = 'en-US'; this.recognition.continuous = true; this.recognition.interimResults = true;
-                    this.recognition.onresult = (e) => {
-                        let interim = '';
-                        for (let i = e.resultIndex; i < e.results.length; ++i) {
-                            if (e.results[i].isFinal) this.finalTranscript += e.results[i][0].transcript + ' ';
-                            else interim += e.results[i][0].transcript;
-                        }
-                        tBox.innerText = this.finalTranscript + interim;
-                    };
-                    this.recognition.start();
-                }
+                this.recognition = new SR(); this.recognition.lang = 'en-US'; this.recognition.continuous = true; this.recognition.interimResults = true;
+                this.recognition.onresult = (e) => {
+                    let interim = ''; for (let i = e.resultIndex; i < e.results.length; ++i) {
+                        if (e.results[i].isFinal) this.finalTranscript += e.results[i][0].transcript + ' ';
+                        else interim += e.results[i][0].transcript;
+                    }
+                    document.getElementById('transcript-box').innerText = this.finalTranscript + interim;
+                };
+                this.recognition.start();
 
-                this.mediaRecorder = new MediaRecorder(stream); this.audioChunks = [];
-                this.mediaRecorder.ondataavailable = e => this.audioChunks.push(e.data);
-                this.mediaRecorder.start();
+                // 馬力歐跳動
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const analyser = this.audioCtx.createAnalyser();
+                this.audioCtx.createMediaStreamSource(stream).connect(analyser);
+                const data = new Uint8Array(analyser.frequencyBinCount);
+                const loop = () => {
+                    if(!this.isRec) return; analyser.getByteFrequencyData(data);
+                    let vol = data.reduce((a,b)=>a+b)/data.length;
+                    document.getElementById('mario-sprite').style.transform = `translateY(-${vol*1.2}px)`;
+                    requestAnimationFrame(loop);
+                };
+                loop();
             },
 
-            forceTeacherPass() {
-                this.finalTranscript = this.data.p[this.part].t; 
-                this.stopRecording();
-            },
+            forceTeacherPass() { this.finalTranscript = this.data.p[this.part].t; this.stopRecording(); },
 
             stopRecording() {
-                this.isRec = false;
-                if(this.recognition) this.recognition.stop();
-                if(this.mediaRecorder) this.mediaRecorder.stop();
-                document.getElementById('energy-orb').classList.remove('recording');
-                document.getElementById('recBtn').innerText = "RECORD";
-                document.getElementById('recBtn').style.background = "#7ccb11";
+                this.isRec = false; this.recognition.stop();
+                document.getElementById('recBtn').innerText = "RECORD"; document.getElementById('recBtn').style.background = "#7ccb11";
                 document.getElementById('mario-sprite').style.transform = `translateY(0)`;
                 
-                // 評分邏輯
                 const spoken = this.finalTranscript.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w);
                 const expected = this.data.p[this.part].t.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w);
                 let matches = 0; let sIdx = 0;
@@ -361,64 +278,38 @@
                         if (expected[i] === spoken[j]) { matches++; sIdx = j + 1; break; }
                     }
                 }
-                const rawScore = Math.round((matches / expected.length) * 100);
+                const raw = Math.round((matches / expected.length) * 100);
                 
-                // 🚀 寬鬆評分演算法
-                let finalScore = 0;
-                if (rawScore < 30) finalScore = rawScore * 2;
-                else if (rawScore < 40) finalScore = 65 + (rawScore - 30);
-                else if (rawScore < 50) finalScore = 75 + (rawScore - 40);
-                else if (rawScore < 70) finalScore = 85 + (rawScore - 60) * 0.5;
-                else finalScore = 95 + Math.min(5, (rawScore - 70) / 6);
+                // 🚀 寬鬆演算法
+                let score = 0;
+                if(raw < 30) score = raw * 2;
+                else if(raw < 40) score = 65 + (raw-30);
+                else if(raw < 50) score = 75 + (raw-40);
+                else if(raw < 70) score = 85 + (raw-60) * 0.5;
+                else score = 95 + Math.min(5, (raw-70)/6);
                 
-                this.showResult(Math.round(finalScore));
+                this.showResult(Math.round(score));
             },
 
-            async showResult(score) {
-                const modal = document.getElementById('result-modal');
-                modal.classList.remove('hidden');
-                
-                // 分數跑馬燈
-                let cur = 0;
-                const timer = setInterval(() => {
-                    if(cur >= score) clearInterval(timer);
-                    document.getElementById('finalScore').innerText = cur;
-                    cur++;
-                }, 20);
-
-                // 星星獎勵
-                const starBox = document.getElementById('starBox');
-                starBox.innerHTML = '';
-                const starLevels = [70, 85, 95];
-                starLevels.forEach((lv, i) => {
-                    const color = score >= lv ? 'text-yellow-400 fill-yellow-400' : 'text-slate-700';
-                    const y = i === 1 ? '-translate-y-4' : '';
-                    starBox.innerHTML += `<i data-lucide="star" class="w-12 h-12 ${color} ${y}"></i>`;
-                });
+            showResult(score) {
+                const modal = document.getElementById('result-modal'); modal.classList.remove('hidden');
+                document.getElementById('finalScore').innerText = score;
+                const starBox = document.getElementById('starBox'); starBox.innerHTML = '';
+                [70, 85, 95].forEach((lv, i) => starBox.innerHTML += `<i data-lucide="star" class="w-12 h-12 ${score>=lv?'text-yellow-400 fill-yellow-400':'text-slate-700'} ${i===1?'-translate-y-4':''}"></i>`);
                 lucide.createIcons();
 
                 if(score >= 75) {
                     document.getElementById('snd-coin').play();
-                    if(score >= 95) {
-                        document.getElementById('snd-win').play();
-                        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-                    }
-                    
-                    let next = this.level + 1;
-                    if(this.level >= this.partProg[this.part]) this.partProg[this.part] = next;
-                    if(this.level === 3) { this.pizza++; document.getElementById('pizzaCount').innerText = this.pizza; }
+                    if(score >= 95) confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                    if(this.level >= this.partProg[this.part]) this.partProg[this.part] = this.level + 1;
+                    if(this.level === 3 && score >= 95) { this.pizza++; document.getElementById('pizzaCount').innerText = this.pizza; }
                     this.saveData(); this.renderMap();
-                }
-
-                // 同步 GAS
-                if(GAS_URL !== "https://script.google.com/macros/s/AKfycbzphKv20tnlblLgwI8KXcUhUs3VyN2Sw_T37ijWsEUqe7ch1Lnhl1eXnUKV1XrWiBu5/exec") {
-                    fetch(GAS_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ name: this.name, part: this.part, score: score, pizzaEarned: (this.level === 3 && score >= 95) })
-                    });
+                    // 同步到試算表
+                    if(GAS_SYNC_URL) fetch(GAS_SYNC_URL, { method: 'POST', body: JSON.stringify({ name: this.name, part: this.part, score: score }) });
                 }
             }
         };
+        const GAS_SYNC_URL = GAS_URL;
         window.onload = () => app.init();
     </script>
 </body>
