@@ -3,381 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Seasons AI - PIXEL PIZZA PARTY</title>
+    <title>Seasons AI - 終極實戰版 (Pro)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@700;900&display=swap');
-        :root { --game-bg: #5c94fc; --mario-red: #e76e55; }
-        body { background-color: #000; font-family: 'Noto Sans TC', sans-serif; color: #fff; overflow-x: hidden; touch-action: pan-y; -webkit-user-select: none; }
-        .pixel-font { font-family: 'Press Start 2P', cursive; }
-        .screen { display: none; min-height: 100vh; padding: 20px; flex-direction: column; background: var(--game-bg); border: 8px solid #000; }
-        .screen.active { display: flex; animation: slideUp 0.2s steps(4); }
-        @keyframes slideUp { from { transform: translateY(20px); } to { transform: translateY(0); } }
-        .pixel-border { border: 4px solid #000; box-shadow: 4px 0 #000, -4px 0 #000, 0 4px #000, 0 -4px #000; background: #fff; color: #000; }
-        .btn-pixel { position: relative; padding: 15px; background: #e76e55; color: #fff; box-shadow: inset -4px -4px #8c2020; border: 4px solid #000; active:translate-y-1; transition: all 0.1s; }
-        .btn-green { background: #7ccb11; box-shadow: inset -4px -4px #3e7305; }
-        .btn-blue { background: #3cbcfc; box-shadow: inset -4px -4px #0078b8; }
-        .stage-box { background: rgba(0,0,0,0.3); border: 4px solid #000; padding: 15px; border-radius: 8px; }
+        @import url('https://fonts.googleapis.com/css2?family=Bungee&family=Noto+Sans+TC:wght@400;700;900&display=swap');
         
-        .karaoke-word { display: inline-block; color: #fff; margin-right: 8px; margin-bottom: 8px; font-size: 1.2rem; transition: all 0.1s; }
-        .karaoke-word.active { color: #f8d712; transform: scale(1.2); text-shadow: 2px 2px #000; }
+        /* 動態漸層背景 */
+        :root { --panel-bg: rgba(30, 41, 59, 0.85); --primary: #22c55e; }
+        body { 
+            background: linear-gradient(-45deg, #0f172a, #1e1b4b, #064e3b, #0f172a);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            font-family: 'Noto Sans TC', sans-serif; color: #f8fafc; overflow-x: hidden; touch-action: pan-y; 
+        }
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        .font-game { font-family: 'Bungee', cursive; }
+        .screen { display: none; min-height: 100vh; padding: 20px; animation: fadeIn 0.4s ease-out; flex-direction: column; }
+        .screen.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* 融合版：能量球與發光特效 */
-        #energy-orb { transition: all 0.1s ease-out; background: radial-gradient(circle, #4ade80, #15803d); border: 4px solid #000; box-shadow: 0 5px 0 #000; }
+        /* 玻璃透視面板質感 */
+        .glass-panel { background: var(--panel-bg); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+        
+        .karaoke-word { display: inline-block; transition: all 0.15s ease-out; color: #64748b; margin-right: 8px; margin-bottom: 8px; font-size: 1.3rem; }
+        .karaoke-word.active { color: #facc15; font-weight: 900; transform: scale(1.15) translateY(-2px); text-shadow: 0 4px 15px rgba(250, 204, 21, 0.6); }
+
+        /* ✨ 老師要求的能量球發光特效 ✨ */
+        #energy-orb { transition: all 0.1s ease-out; background: radial-gradient(circle, #4ade80, #15803d); box-shadow: 0 0 20px rgba(34, 197, 94, 0.4); }
         #energy-orb.loud { 
             background: radial-gradient(circle, #facc15, #ea580c); 
-            box-shadow: 0 0 40px rgba(234, 88, 12, 0.9), 0 5px 0 #000; 
-            transform: scale(1.2) !important; 
+            box-shadow: 0 0 50px rgba(234, 88, 12, 0.8); 
+            transform: scale(1.4) !important; 
         }
         
-        #mario-sprite { transition: transform 0.05s linear; width: 50px; image-rendering: pixelated; position: absolute; bottom: 60px; z-index: 10; }
-        
-        .tab-btn { font-size: 8px; padding: 8px; border: 2px solid #000; background: #ccc; }
-        .tab-btn.active { background: #7ccb11; color: #fff; }
-        .locked { filter: grayscale(1); opacity: 0.5; pointer-events: none; }
+        .btn-locked { filter: grayscale(1); opacity: 0.5; pointer-events: none; }
+        .tab-btn { transition: all 0.2s; }
+        .tab-btn.locked { opacity: 0.4; pointer-events: none; border: 1px dashed #64748b; }
+
+        /* 披薩進化特效 */
+        .pizza-pop { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <audio id="snd-jump" src="https://assets.mixkit.co/active_storage/sfx/2092/2092-preview.mp3"></audio>
-    <audio id="snd-coin" src="https://assets.mixkit.co/active_storage/sfx/2015/2015-preview.mp3"></audio>
+    <button onclick="document.getElementById('ai-modal').classList.remove('hidden')" class="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(79,70,229,0.6)] z-40 hover:scale-110 transition-all animate-bounce">
+        <i data-lucide="bot" class="text-white w-7 h-7"></i>
+    </button>
 
-    <div class="max-w-md mx-auto relative min-h-screen">
+    <div class="max-w-md mx-auto relative min-h-screen pb-10 z-10">
         
-        <div id="screen-login" class="screen active justify-center text-center">
-            <div class="mb-10"><img src="https://img.icons8.com/color/144/super-mario.png" class="w-24 mx-auto animate-bounce"></div>
-            <h1 class="pixel-font text-xl text-white mb-8" style="text-shadow: 4px 4px #000;">SEASONS WORLD</h1>
-            <div class="pixel-border p-6 mx-4">
-                <label class="block pixel-font text-[10px] mb-4">SELECT HERO:</label>
-                <select id="heroSelect" class="w-full bg-black text-white p-3 border-4 border-double border-white mb-8 outline-none text-center"></select>
-                <button onclick="app.login()" class="btn-pixel w-full pixel-font text-sm btn-green">START</button>
-            </div>
-        </div>
-
-        <div id="screen-map" class="screen">
-            <div class="flex justify-between items-center mb-6 stage-box">
-                <div>
-                    <h2 class="pixel-font text-[10px]" id="displayName">Player</h2>
-                    <p class="pixel-font text-[7px] text-yellow-300 mt-2">WORLD MISSION</p>
-                </div>
-                <div class="text-right">
-                    <p class="pixel-font text-[8px]">PIZZA</p>
-                    <p class="pixel-font text-xl text-yellow-400" id="pizzaCount">0</p>
-                </div>
-            </div>
-            <div id="partListContainer" class="grid gap-4"></div>
-        </div>
-
-        <div id="screen-audio" class="screen">
-            <button onclick="app.goBack()" class="pixel-font text-[8px] mb-4 text-white"> < BACK</button>
-            <div class="stage-box flex-1 flex flex-col">
-                <h3 class="pixel-font text-[10px] text-blue-300 mb-6 underline text-center">MIMIC TEACHER</h3>
-                <div id="karaokeBox" class="bg-black/50 p-6 rounded-lg flex-1 overflow-y-auto border-4 border-black"></div>
-                <button id="playBtn" onclick="app.playAudio()" class="btn-pixel w-full pixel-font text-sm btn-blue mt-6">LISTEN</button>
-            </div>
-        </div>
-
-        <div id="screen-challenge" class="screen">
-            <button onclick="app.goBack()" class="pixel-font text-[8px] mb-4 text-white"> < BACK</button>
-            <div class="flex gap-1 mb-4">
-                <button onclick="app.setLevel(1)" id="lvl1-tab" class="tab-btn active flex-1 pixel-font">CLOZE</button>
-                <button onclick="app.setLevel(2)" id="lvl2-tab" class="tab-btn locked flex-1 pixel-font">INIT</button>
-                <button onclick="app.setLevel(3)" id="lvl3-tab" class="tab-btn locked flex-1 pixel-font">BLANK</button>
-            </div>
+        <div id="screen-login" class="screen active justify-center">
+            <h1 class="text-6xl font-game text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-600 mb-2 text-center drop-shadow-lg">SEASONS</h1>
+            <p class="text-green-300 font-bold mb-8 uppercase text-xs text-center tracking-[0.3em]">AI Speaking Center</p>
             
-            <div class="stage-box flex-1 flex flex-col items-center relative">
-                <button id="manual-pass-btn" onclick="app.forceTeacherPass()" class="hidden absolute top-[-10px] right-2 bg-yellow-400 text-black pixel-font text-[7px] p-2 border-2 border-black z-20">🔑 PASS</button>
-                
-                <div id="challengeDisplay" class="bg-black/40 p-4 text-sm font-bold w-full mb-6 min-h-[100px] border-b-4 border-black text-slate-200 leading-relaxed"></div>
-                
-                <div class="flex flex-col items-center justify-center w-full mb-4 relative h-32">
-                    <img id="mario-sprite" src="https://img.icons8.com/color/96/super-mario.png">
-                    <div id="energy-orb" class="w-16 h-16 rounded-full flex items-center justify-center relative z-0 mt-8">
-                        <i data-lucide="mic" class="w-6 h-6 text-white opacity-80"></i>
-                    </div>
-                </div>
-
-                <div id="transcript-box" class="w-full p-4 bg-black/60 border-4 border-black rounded-xl text-[9px] pixel-font text-slate-300 min-h-[80px] max-h-[120px] overflow-y-auto text-left leading-loose mb-4 shadow-inner">
-                    PRESS START AND SPEAK CLEARLY...
-                </div>
-
-                <button id="recBtn" onclick="app.toggleRecording()" class="btn-pixel w-full pixel-font text-sm btn-green mt-auto flex justify-center items-center gap-2">
-                    START CHALLENGE
-                </button>
-            </div>
-        </div>
-
-        <div id="result-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/90 px-6">
-            <div class="pixel-border p-8 w-full max-w-sm text-center">
-                <div id="starBox" class="flex justify-center gap-2 mb-6"></div>
-                <div class="pixel-font text-5xl text-yellow-500 mb-6" id="finalScore">0</div>
-                <p id="modal-desc" class="pixel-font text-[8px] leading-loose mb-8 text-black">COURSE CLEAR!</p>
-                <button onclick="document.getElementById('result-modal').classList.add('hidden')" class="btn-pixel w-full pixel-font text-sm btn-blue">CONTINUE</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // ==========================================
-        // 🚨 終極對齊：填入您的 GAS URL
-        // ==========================================
-        const GAS_URL = "您的_GAS_URL_貼在這裡"; 
-
-        const DB = {
-            "Sophia": { topic: "空氣汙染", p: { 1: { t: "Hello everyone! My name is Sophia. Have you ever looked up at the Taichung sky and noticed it looks gray and blurry? That is air pollution." }, 2: { t: "During my Chinese New Year holiday, I went to an amusement park. Right next to the park, I saw a factory burning trash." }, 3: { t: "I decided to start a scientific mission. Every single day, I check the AQI—the Air Quality Index." }, 4: { t: "My family also started Eco-Friendly Days. Now, instead of driving, we ride our bikes." }}},
-            "Linus": { topic: "流浪動物", p: { 1: { t: "Hello everyone! My name is Linus. Today, I want to talk about our furry neighbors—the stray animals of Taichung." }, 2: { t: "On my way, I saw stray dogs and cats everywhere. They were so thin, weak, and lonely." }, 3: { t: "Look at these animals; the life of a stray is very difficult. Many of them are dirty and smelly." }, 4: { t: "We must remember that these animals were once someone's beloved pets. They are not trash!" }}},
-            "Robben": { topic: "包裝垃圾", p: { 1: { t: "Hello everyone! My name is Robben. Today, I want to talk about a hidden problem in Taichung. During my winter vacation, I saw mountains of packaging." }, 2: { t: "I also saw people throwing trash on the ground in our local parks. It made me feel very unhappy and worried." }, 3: { t: "I asked my mom: Why do parcels have so much extra packaging? She told me it is to protect things." }, 4: { t: "I started a mission to count the packaging for every parcel we receive. I found so much plastic!" }}},
-            "Eason": { topic: "食物浪費", p: { 1: { t: "Hello everyone! My name is Eason. Have you ever thought about where your food goes after you throw it away?" }, 2: { t: "It reminded me of a story from when I was little. I accidentally ate some old yogurt." }, 3: { t: "Throwing away food is not just a waste of money; it is a huge waste of resources." }, 4: { t: "Small actions can create a huge impact if everyone does them. Please finish your food!" }}},
-            "Elsa": { topic: "空氣廢氣", p: { 1: { t: "Hello everyone! My name is Elsa. Every morning on my way to school, I see a lot of cars on the street." }, 2: { t: "During my winter vacation, I saw many cars parked, but they did not turn off their engines!" }, 3: { t: "One day, I checked the AQI. The report said the air was very dangerous for children." }, 4: { t: "This experience taught me that small actions create a huge impact. Now we ride bikes!" }}},
-            "Yunny": { topic: "友善動物", p: { 1: { t: "Hello everyone! My name is Yunny. It breaks my heart to see poor dogs and cats living on the street." }, 2: { t: "During my winter holiday, I saw a tiny gray kitten hiding near a trash can. It was shaking." }, 3: { t: "I wanted to take action! My family went to find a park for pets. We found a special playground." }, 4: { t: "When I went inside, I saw many cute and happy dogs eating with their owners. Please respect lives." }}},
-            "Winny": { topic: "減塑環保", p: { 1: { t: "Hello everyone! My name is Winny. Today, I want to share my mission to make Taichung a healthier home." }, 2: { t: "Now, I always bring one giant reusable bag! This small change stops the mess." }, 3: { t: " disposable plastic spoons and chopsticks create bad chemicals. I use my own utensils." }, 4: { t: "I learned about eco-friendly clothes made from recycled plastic. Let's make smarter choices." }}},
-            "Ryan": { topic: "珍惜食物", p: { 1: { t: "Hello everyone! My name is Ryan. Have you ever thought about where your food waste goes?" }, 2: { t: "During Chinese New Year, I saw people eating many delicious meals. But there were leftovers!" }, 3: { t: "Did you know that Taichung produces more food waste than we can handle? Be a food saver!" }, 4: { t: "We don’t need magic to save the world; we just need to change our habits. Finish your food!" }}},
-            "Rebecca": { topic: "守護呼吸", p: { 1: { t: "Close your eyes and imagine a city where you must wear a mask just to go outside and play." }, 2: { t: "I joined the Air Guardians to help. My mission is called The Green Traveler." }, 3: { t: "During my Chinese New Year holiday, I successfully rode my bike 4 times. It makes a difference." }, 4: { t: "Please take the bus or the MRT whenever you can. These small actions help Taichung's air." }}},
-            "Vincent": { topic: "流浪家園", p: { 1: { t: "Hello everyone! My name is Vincent. Imagine a perfect city where every stray animal has a warm bed." }, 2: { t: "During Chinese New Year, I saw many dogs wandering on the street. Please never give up on them." }, 3: { t: "I found out that Taichung has two big animal shelters. There are many stray dogs waiting." }, 4: { t: "I have started giving them food to help. We must learn how to treat animals with respect." }}},
-            "Leo": { topic: "海洋守護者", p: { 1: { t: "Hello everyone! My name is Leo. Have you ever thought about where your plastic bags go?" }, 2: { t: "During my winter vacation, I saw a stray dog named Da Huang. He only had three legs." }, 3: { t: "Plastic pollutes our air and makes our planet hot. Humans are being selfish." }, 4: { t: "Now, I always use my own reusable cup when I buy drinks. One cup might seem small." }}},
-            "William": { topic: "惜食英雄", p: { 1: { t: "Hello everyone! My name is William. Have you ever walked down the street and seen wasted breakfast?" }, 2: { t: "One day, I saw a person throw a lunch box on the road. The food was old and smelled terrible!" }, 3: { t: "It looks like the Earth has a fever and needs medicine. We need to act now as a team!" }, 4: { t: "I always finish my food! Ever since I was a little boy, my plate is always clean." }}},
-            "Cynthia": { topic: "天空守望者", p: { 1: { t: "Hello everyone! My name is Cynthia. I love Taichung, but I really hate the dirty air." }, 2: { t: "Every day, factories and cars pump toxic smoke into the sky. We must act now." }, 3: { t: "Now, I check the AQI every day. My family even learns how to turn trash into treasure." }, 4: { t: "When I grow up, I want to be an inventor. I want to build electric houses and clean cars." }}},
-            "Fiona": { topic: "毛孩鄰居", p: { 1: { t: "Hello everyone! My name is Fiona. Today, I want to talk about stray animals in our city." }, 2: { t: "During my holiday, I saw a small cat near a restaurant. My family gave it some fish snacks." }, 3: { t: "Later, I saw a different cat at a hotel. This cat was very chubby! The staff feed it." }, 4: { t: "Every small act of kindness helps these animals feel less alone. Let's look after them." }}},
-            "Zac": { topic: "河川衛兵", p: { 1: { t: "Hello everyone! My name is Zac. Today, I want to talk about plastic bags. I counted them." }, 2: { t: "I found so many bags in just one spot! This is a problem we cannot ignore anymore." }, 3: { t: "If 30,000 people use 50 bags, that is 1.5 million bags! That makes a river polluted." }, 4: { t: "What happens to the fish? They will die. I will use my own reusable bag every time." }}},
-            "Jeremy": { topic: "惜食戰士", p: { 1: { t: "Hello everyone! My name is Jeremy. Have you ever thought about where your food waste goes?" }, 2: { t: "This made me feel very sad for our resources. We must stop this right now!" }, 3: { t: "We made special flyers to teach people. I even went to the security guards in my neighborhood." }, 4: { t: "I take a photo every time I finish my meal to show that I am keeping my promise." }}},
-            "Emma": { topic: "低碳騎士", p: { 1: { t: "Hello everyone! My name is Emma. Did you know that Taichung’s temperature is getting hotter?" }, 2: { t: "Since we have a motorcycle, my father and I decided to check the health of its engine." }, 3: { t: "We have a better way! We can ride eco-friendly bicycles. It even saves money!" }, 4: { t: "If we stop the black smoke from factories, our city will stay beautiful. Let's help the air." }}},
-            "Dora": { topic: "領養大使", p: { 1: { t: "Hello everyone! My name is Dora. What would you do if you were left alone in the rain?" }, 2: { t: "This winter, I saw stray dogs and cats. They were taken to an animal shelter. I was happy." }, 3: { t: "When animals are scared and have no homes, they can become a danger to the city." }, 4: { t: "Please remember: Adopt, don't shop! Every animal deserves a home and a voice." }}}
-        };
-
-        const app = {
-            name: "", data: null, part: 1, level: 1, pizza: 0,
-            partProg: { 1: 0, 2: 0, 3: 0, 4: 0 }, 
-            isRec: false, isPlaying: false, finalTranscript: "",
-            recognition: null, audioCtx: null, analyser: null, maxVol: 0,
-
-            init() {
-                const s = document.getElementById('heroSelect');
-                Object.keys(DB).sort().forEach(n => s.appendChild(new Option(n, n)));
-                lucide.createIcons();
-            },
-
-            saveData() {
-                if(!this.name) return;
-                localStorage.setItem(`seasons_mario_${this.name}`, JSON.stringify({ pizza: this.pizza, partProg: this.partProg }));
-            },
-            loadData(name) {
-                const saved = localStorage.getItem(`seasons_mario_${name}`);
-                if(saved) {
-                    const d = JSON.parse(saved);
-                    this.pizza = d.pizza || 0; this.partProg = d.partProg || { 1: 0, 2: 0, 3: 0, 4: 0 };
-                } else {
-                    this.pizza = 0; this.partProg = { 1: 0, 2: 0, 3: 0, 4: 0 };
-                }
-            },
-
-            switch(id) { document.querySelectorAll('.screen').forEach(el => el.classList.remove('active')); document.getElementById(id).classList.add('active'); },
-            goBack() { 
-                if(this.isPlaying) window.speechSynthesis.cancel(); 
-                if(this.isRec) this.stopRecording(true);
-                this.switch('screen-map'); 
-            },
-
-            login() {
-                const n = document.getElementById('heroSelect').value;
-                if(!n) return;
-                this.name = n; this.data = DB[n]; this.loadData(n);
-                document.getElementById('displayName').innerText = n;
-                document.getElementById('pizzaCount').innerText = this.pizza;
-                this.renderMap(); this.switch('screen-map');
-            },
-
-            renderMap() {
-                const c = document.getElementById('partListContainer');
-                c.innerHTML = "";
-                Object.keys(this.data.p).forEach(pNum => {
-                    const prog = this.partProg[pNum];
-                    const chalLk = prog < 1 ? 'locked' : '';
-                    c.innerHTML += `
-                    <div class="stage-box flex items-center gap-4">
-                        <div class="pixel-font text-white text-[12px]">W${pNum}</div>
-                        <div class="flex-1">
-                            <p class="pixel-font text-[7px] text-yellow-200">LV.${prog}</p>
-                        </div>
-                        <button onclick="app.goAudio(${pNum})" class="btn-pixel pixel-font text-[7px] btn-blue">DEMO</button>
-                        <button onclick="app.goChallenge(${pNum})" class="btn-pixel pixel-font text-[7px] btn-green ${chalLk}">GO</button>
-                    </div>`;
-                });
-                lucide.createIcons();
-            },
-
-            goAudio(p) {
-                this.part = p; document.getElementById('curPartAudio').innerText = p;
-                const words = this.data.p[p].t.split(" ");
-                document.getElementById('karaokeBox').innerHTML = words.map((w, i) => `<span class="karaoke-word" id="kw-${i}">${w}</span>`).join("");
-                this.switch('screen-audio');
-            },
-
-            playAudio() {
-                if(this.isPlaying) return; this.isPlaying = true;
-                const btn = document.getElementById('playBtn'); btn.classList.add('opacity-50');
-                const msg = new SpeechSynthesisUtterance(this.data.p[this.part].t);
-                msg.lang = 'en-US'; msg.rate = 0.9;
-                const words = document.querySelectorAll('.karaoke-word');
-                let curIdx = 0;
-                const animate = () => {
-                    if (curIdx >= words.length || !this.isPlaying) return;
-                    words.forEach(w => w.classList.remove('active'));
-                    words[curIdx].classList.add('active');
-                    curIdx++; setTimeout(animate, (words[curIdx-1].innerText.length / 20) * 1000 + 300);
-                };
-                msg.onstart = animate;
-                msg.onend = () => { 
-                    this.isPlaying = false; btn.classList.remove('opacity-50'); 
-                    if(this.partProg[this.part] < 1) { this.partProg[this.part] = 1; this.saveData(); }
-                    this.renderMap();
-                };
-                window.speechSynthesis.speak(msg);
-            },
-
-            goChallenge(p) {
-                this.part = p; const prog = this.partProg[p];
-                document.getElementById('lvl1-tab').classList.remove('locked');
-                document.getElementById('lvl2-tab').classList.toggle('locked', prog < 2);
-                document.getElementById('lvl3-tab').classList.toggle('locked', prog < 3);
-                this.setLevel(Math.min(3, Math.max(1, prog)));
-                this.switch('screen-challenge');
-                document.getElementById('manual-pass-btn').classList.add('hidden');
-            },
-
-            setLevel(lvl) {
-                this.level = lvl;
-                [1,2,3].forEach(l => document.getElementById(`lvl${l}-tab`).className = `tab-btn flex-1 pixel-font ${l===lvl ? 'active' : ''} ${document.getElementById(`lvl${l}-tab`).classList.contains('locked')?'locked':''}`);
-                const txt = this.data.p[this.part].t;
-                const d = document.getElementById('challengeDisplay');
-                if(lvl===1) d.innerText = txt.split(" ").map((w,i)=>i%3===0?"____":w).join(" ");
-                else if(lvl===2) d.innerText = txt.split(". ").map(s=>s.split(" ")[0]+"...").join("\n");
-                else d.innerText = "BOSS LEVEL: SPEAK FROM MEMORY!";
-            },
-
-            async toggleRecording() {
-                const btn = document.getElementById('recBtn');
-                const orb = document.getElementById('energy-orb');
-                const tBox = document.getElementById('transcript-box');
-                const passBtn = document.getElementById('manual-pass-btn');
-
-                if(this.isRec) { this.stopRecording(false); return; }
-
-                this.isRec = true; this.finalTranscript = ""; this.maxVol = 0;
-                btn.innerText = "STOP"; btn.classList.replace('btn-green', 'btn-pixel'); btn.style.background = "#ff0000";
-                orb.classList.add('recording');
-                tBox.innerText = "LISTENING...";
-                passBtn.classList.remove('hidden');
-                document.getElementById('snd-jump').play();
-
-                const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-                if (!SR) {
-                    alert("Browser limitation: Speech recognition disabled. Use Teacher Pass.");
-                    return;
-                }
-
-                this.recognition = new SR(); this.recognition.lang = 'en-US'; this.recognition.continuous = true; this.recognition.interimResults = true;
-                this.recognition.onresult = (e) => {
-                    let interim = ''; for (let i = e.resultIndex; i < e.results.length; ++i) {
-                        if (e.results[i].isFinal) this.finalTranscript += e.results[i][0].transcript + ' ';
-                        else interim += e.results[i][0].transcript;
-                    }
-                    tBox.innerText = (this.finalTranscript + interim).toUpperCase();
-                    tBox.scrollTop = tBox.scrollHeight;
-                };
-                this.recognition.onerror = (e) => { if (this.isRec) this.recognition.stop(); };
-                try { this.recognition.start(); } catch(e){}
-
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    this.analyser = this.audioCtx.createAnalyser();
-                    this.audioCtx.createMediaStreamSource(stream).connect(this.analyser);
-                    const dataArray = new Uint8Array(256);
-                    
-                    const updateVol = () => {
-                        if(!this.isRec || !this.analyser) return;
-                        this.analyser.getByteFrequencyData(dataArray);
-                        let sum = 0; for(let i=0; i<dataArray.length; i++) sum += dataArray[i];
-                        let realVol = Math.max(0, (sum / dataArray.length) - 80);
-                        this.maxVol = Math.max(this.maxVol, realVol);
-                        
-                        if(realVol > 15) orb.classList.add('loud');
-                        else orb.classList.remove('loud');
-                        
-                        // Mario jump effect
-                        document.getElementById('mario-sprite').style.transform = `translateY(-${Math.min(80, realVol * 1.5)}px)`;
-                        requestAnimationFrame(updateVol);
-                    };
-                    updateVol();
-                } catch(e) { console.log("Mic access limited for visualizer, but speech rec might still work."); }
-            },
-
-            forceTeacherPass() { this.finalTranscript = this.data.p[this.part].t; this.stopRecording(false); },
-
-            stopRecording(isForcedAbort) {
-                this.isRec = false;
-                if(this.recognition) this.recognition.stop();
-                if(this.audioCtx && this.audioCtx.state !== 'closed') this.audioCtx.close();
-                
-                const orb = document.getElementById('energy-orb');
-                const btn = document.getElementById('recBtn');
-                orb.classList.remove('recording', 'loud'); 
-                btn.innerText = "START CHALLENGE"; btn.style.background = "#7ccb11";
-                document.getElementById('mario-sprite').style.transform = `translateY(0)`;
-                document.getElementById('manual-pass-btn').classList.add('hidden');
-                
-                if(isForcedAbort) return;
-
-                const spoken = this.finalTranscript.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w);
-                const expected = this.data.p[this.part].t.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w);
-                let matches = 0; let sIdx = 0;
-                for (let i = 0; i < expected.length; i++) {
-                    for (let j = sIdx; j < Math.min(sIdx + 6, spoken.length); j++) {
-                        if (expected[i] === spoken[j]) { matches++; sIdx = j + 1; break; }
-                    }
-                }
-                const raw = Math.round((matches / expected.length) * 100);
-                
-                // 🚀 寬鬆演算法
-                let score = 0;
-                if(raw < 30) score = raw * 2;
-                else if(raw < 40) score = 65 + (raw-30);
-                else if(raw < 50) score = 75 + (raw-40);
-                else if(raw < 70) score = 85 + (raw-60) * 0.5;
-                else score = 95 + Math.min(5, (raw-70)/6);
-                
-                this.showResult(Math.round(score));
-            },
-
-            showResult(score) {
-                const modal = document.getElementById('result-modal'); modal.classList.remove('hidden');
-                
-                const finalScoreEl = document.getElementById('finalScore');
-                finalScoreEl.innerText = score;
-                finalScoreEl.className = `pixel-font text-5xl mb-6 ${score >= 75 ? 'text-green-400' : 'text-orange-400'}`;
-
-                const starBox = document.getElementById('starBox'); starBox.innerHTML = '';
-                [70, 85, 95].forEach((lv, i) => starBox.innerHTML += `<i data-lucide="star" class="w-12 h-12 ${score>=lv?'text-yellow-400 fill-yellow-400':'text-slate-700'} ${i===1?'-translate-y-4':''}"></i>`);
-                lucide.createIcons();
-
-                document.getElementById('modal-desc').innerText = score >= 75 ? "COURSE CLEAR!" : "TRY AGAIN!";
-
-                if(score >= 75) {
-                    document.getElementById('snd-coin').play();
-                    if(score >= 95) confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-                    if(this.level >= this.partProg[this.part]) this.partProg[this.part] = this.level + 1;
-                    if(this.level === 3 && score >= 95) { this.pizza++; document.getElementById('pizzaCount').innerText = this.pizza; }
-                    this.saveData(); this.renderMap();
-                    
-                    if(GAS_URL !== "您的_GAS_URL_貼在這裡") {
-                        fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ name: this.name, part: this.part, score: score }) });
-                    }
-                }
-            }
-        };
-        window.onload = () => app.init();
-    </script>
-</body>
-</html>
+            <div class="glass-panel p-8 rounded-[2rem] w-full relative overflow-hidden">
+                <div class="w-full flex flex-col items-center mb-6 min-h-[140px]">
+                    <img id="heroAvatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Seasons" class="w-24 h-24 mb-2 transition-all duration-300 hover:rotate-12">
+                    <span id="heroTitle" class="text-[10px] font-black text-blue-300 uppercase tracking-widest bg-blue-900/50 px-3 py-1 rounded-full border border-blue-500/3
